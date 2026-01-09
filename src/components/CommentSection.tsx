@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Send, Flag, Trash2, User } from 'lucide-react';
-import { Comment } from '@/types';
+import { Comment } from '@/services/reviewService';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
@@ -8,57 +8,40 @@ import { Label } from '@/components/ui/label';
 import { EmptyState } from './EmptyState';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
 
 interface CommentSectionProps {
   reviewId: string;
   comments: Comment[];
+  isLoading?: boolean;
   onAddComment?: (text: string, isAnonymous: boolean) => void;
   onDeleteComment?: (commentId: string) => void;
-  onReportComment?: (commentId: string, reason: string) => void;
+  onReportComment?: (commentId: string, reason?: string) => void;
+  currentUserId: string | null;
+  isAdmin: boolean;
+  isLoggedIn: boolean;
 }
-
-// Mock auth state
-const isLoggedIn = false;
-const currentUserId: string | null = null;
-const isAdmin = false;
 
 export function CommentSection({
   comments,
+  isLoading = false,
   onAddComment,
   onDeleteComment,
   onReportComment,
+  currentUserId,
+  isAdmin,
+  isLoggedIn,
 }: CommentSectionProps) {
   const [newComment, setNewComment] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
 
   const handleSubmit = async () => {
     if (!newComment.trim()) return;
-    if (newComment.length > 500) {
-      toast({
-        title: 'Comment too long',
-        description: 'Comments must be 500 characters or less.',
-        variant: 'destructive',
-      });
-      return;
-    }
 
     setIsSubmitting(true);
     try {
       onAddComment?.(newComment.trim(), isAnonymous);
       setNewComment('');
-      toast({
-        title: 'Comment posted',
-        description: 'Your comment has been added successfully.',
-      });
-    } catch {
-      toast({
-        title: 'Error',
-        description: 'Failed to post comment. Please try again.',
-        variant: 'destructive',
-      });
     } finally {
       setIsSubmitting(false);
     }
@@ -66,24 +49,23 @@ export function CommentSection({
 
   const handleReport = (commentId: string) => {
     onReportComment?.(commentId, 'Inappropriate content');
-    toast({
-      title: 'Comment reported',
-      description: 'Thank you for helping keep our community safe.',
-    });
   };
 
   const handleDelete = (commentId: string) => {
     onDeleteComment?.(commentId);
-    toast({
-      title: 'Comment deleted',
-      description: 'The comment has been removed.',
-    });
   };
 
   const canDelete = (comment: Comment) => {
     if (isAdmin) return true;
-    if (currentUserId && comment.userId === currentUserId) return true;
+    if (currentUserId && comment.user_id === currentUserId) return true;
     return false;
+  };
+
+  const getIdentityLabel = () => {
+    if (isLoggedIn) {
+      return isAnonymous ? 'Posting as Anonymous' : 'Posting as You';
+    }
+    return isAnonymous ? 'Posting as Anonymous' : 'Posting as Guest';
   };
 
   return (
@@ -93,12 +75,7 @@ export function CommentSection({
         <div className="mb-3">
           <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
             <User className="w-4 h-4" />
-            <span>
-              {isLoggedIn 
-                ? (isAnonymous ? 'Posting as Anonymous' : 'Posting as You')
-                : (isAnonymous ? 'Posting as Anonymous' : 'Posting as Guest')
-              }
-            </span>
+            <span>{getIdentityLabel()}</span>
           </div>
           <Textarea
             placeholder="Share your thoughts..."
@@ -128,7 +105,7 @@ export function CommentSection({
           
           <Button
             onClick={handleSubmit}
-            disabled={!newComment.trim() || isSubmitting}
+            disabled={!newComment.trim() || isSubmitting || newComment.length > 500}
             size="sm"
             className="bg-primary text-primary-foreground hover:bg-primary/90"
           >
@@ -144,7 +121,16 @@ export function CommentSection({
           Comments ({comments.length})
         </h3>
         
-        {comments.length === 0 ? (
+        {isLoading ? (
+          <div className="space-y-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={i} className="glass-card rounded-lg p-4 animate-pulse">
+                <div className="h-4 w-24 rounded skeleton-shimmer mb-2" />
+                <div className="h-4 w-full rounded skeleton-shimmer" />
+              </div>
+            ))}
+          </div>
+        ) : comments.length === 0 ? (
           <EmptyState type="comments" />
         ) : (
           <div className="space-y-3">
@@ -161,15 +147,18 @@ export function CommentSection({
                     <div className="flex items-center gap-2 mb-1">
                       <span className={cn(
                         'text-sm font-medium',
-                        comment.displayName === 'Anonymous' || comment.displayName === 'Guest'
+                        comment.display_name === 'Anonymous' || comment.display_name === 'Guest'
                           ? 'text-muted-foreground italic'
                           : 'text-foreground'
                       )}>
-                        {comment.displayName}
+                        {comment.display_name}
                       </span>
                       <span className="text-xs text-muted-foreground">
-                        {format(comment.createdAt, 'MMM d, yyyy')}
+                        {format(new Date(comment.created_at), 'MMM d, yyyy')}
                       </span>
+                      {comment.reported && (
+                        <span className="text-xs text-amber-500">Reported</span>
+                      )}
                     </div>
                     <p className="text-sm text-foreground/90 whitespace-pre-wrap">
                       {comment.text}
@@ -187,14 +176,16 @@ export function CommentSection({
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     )}
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleReport(comment.id)}
-                      className="h-8 w-8 text-muted-foreground hover:text-amber-500"
-                    >
-                      <Flag className="w-4 h-4" />
-                    </Button>
+                    {!comment.reported && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleReport(comment.id)}
+                        className="h-8 w-8 text-muted-foreground hover:text-amber-500"
+                      >
+                        <Flag className="w-4 h-4" />
+                      </Button>
+                    )}
                   </div>
                 </div>
               </article>

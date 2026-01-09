@@ -12,19 +12,18 @@ import {
   Film
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useLanguages } from '@/hooks/useReviews';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { languages } from '@/data/mockData';
 import { cn } from '@/lib/utils';
-
-// Mock auth state - will be replaced with real auth
-const isLoggedIn = false;
-const isAdmin = false;
 
 export function Drawer() {
   const location = useLocation();
   const { isDrawerOpen, setIsDrawerOpen, selectedLanguage, setSelectedLanguage } = useApp();
+  const { user, isAdmin, signOut, displayName } = useAuth();
+  const { data: languages = [] } = useLanguages();
 
   // Close drawer on route change
   useEffect(() => {
@@ -54,6 +53,11 @@ export function Drawer() {
 
   const handleLanguageSelect = (language: string | null) => {
     setSelectedLanguage(language);
+    setIsDrawerOpen(false);
+  };
+
+  const handleLogout = async () => {
+    await signOut();
     setIsDrawerOpen(false);
   };
 
@@ -180,20 +184,19 @@ export function Drawer() {
                   Account
                 </h3>
                 <ul className="space-y-1">
-                  {isLoggedIn ? (
+                  {user ? (
                     <>
-                      <li>
-                        <Link
-                          to="/profile"
-                          className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
-                        >
-                          <User className="w-4 h-4" />
-                          Profile
-                        </Link>
+                      <li className="px-3 py-2">
+                        <p className="text-sm font-medium text-sidebar-foreground">
+                          {displayName || user.email?.split('@')[0]}
+                        </p>
+                        <p className="text-xs text-sidebar-foreground/60 truncate">
+                          {user.email}
+                        </p>
                       </li>
                       <li>
                         <button
-                          onClick={() => {/* logout */}}
+                          onClick={handleLogout}
                           className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
                         >
                           <LogOut className="w-4 h-4" />

@@ -1,14 +1,16 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, Film, User } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Signup() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signUp, user, isLoading: authLoading } = useAuth();
   
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
@@ -16,6 +18,13 @@ export default function Signup() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !authLoading) {
+      navigate('/');
+    }
+  }, [user, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,16 +58,36 @@ export default function Signup() {
 
     setIsLoading(true);
     
-    // Simulate signup - will be replaced with real auth
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const { error } = await signUp(email, password, displayName || undefined);
     
-    toast({
-      title: 'Signup feature coming soon',
-      description: 'Backend integration required for authentication.',
-    });
+    if (error) {
+      let message = error.message;
+      if (error.message.includes('already registered')) {
+        message = 'An account with this email already exists.';
+      }
+      toast({
+        title: 'Signup failed',
+        description: message,
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Account created!',
+        description: 'Welcome to MovieReviewHub!',
+      });
+      navigate('/');
+    }
     
     setIsLoading(false);
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen cinema-bg flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen cinema-bg flex flex-col">
