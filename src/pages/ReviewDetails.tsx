@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
-import { mockReviews, mockComments } from '@/data/mockData';
-import { Header } from '@/components/Header';
+import { useReview, useComments, useCreateComment, useDeleteComment, useReportComment } from '@/hooks/useReviews';
+import { useAuth } from '@/contexts/AuthContext';
+import { useApp } from '@/contexts/AppContext';
 import { StarRating } from '@/components/StarRating';
 import { LanguageBadge } from '@/components/LanguageBadge';
 import { HelpfulButton } from '@/components/HelpfulButton';
@@ -13,26 +14,20 @@ import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
 import { useToast } from '@/hooks/use-toast';
-import { Comment } from '@/types';
 
 export default function ReviewDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, isAdmin, displayName: authDisplayName } = useAuth();
+  const { deviceId } = useApp();
   
-  const [isLoading, setIsLoading] = useState(true);
-  const [comments, setComments] = useState<Comment[]>([]);
-
-  const review = mockReviews.find((r) => r.id === id);
-
-  useEffect(() => {
-    // Simulate loading
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-      setComments(mockComments.filter((c) => c.reviewId === id));
-    }, 500);
-    return () => clearTimeout(timer);
-  }, [id]);
+  const { data: review, isLoading: reviewLoading, error: reviewError } = useReview(id);
+  const { data: comments = [], isLoading: commentsLoading } = useComments(id);
+  
+  const createComment = useCreateComment();
+  const deleteCommentMutation = useDeleteComment();
+  const reportCommentMutation = useReportComment();
 
   const handleShare = async () => {
     if (navigator.share && review) {
@@ -46,7 +41,6 @@ export default function ReviewDetails() {
         // User cancelled or share failed
       }
     } else {
-      // Fallback: copy to clipboard
       await navigator.clipboard.writeText(window.location.href);
       toast({
         title: 'Link copied',
@@ -56,24 +50,37 @@ export default function ReviewDetails() {
   };
 
   const handleAddComment = (text: string, isAnonymous: boolean) => {
-    const newComment: Comment = {
-      id: `c${Date.now()}`,
-      reviewId: id!,
+    if (!id) return;
+
+    let displayName = 'Guest';
+    if (user) {
+      displayName = isAnonymous ? 'Anonymous' : (authDisplayName || user.email?.split('@')[0] || 'User');
+    } else {
+      displayName = isAnonymous ? 'Anonymous' : 'Guest';
+    }
+
+    createComment.mutate({
+      review_id: id,
       text,
-      isAnonymous,
-      displayName: isAnonymous ? 'Anonymous' : 'Guest',
-      userId: null,
-      createdAt: new Date(),
-      reported: false,
-    };
-    setComments([newComment, ...comments]);
+      is_anonymous: isAnonymous,
+      display_name: displayName,
+      user_id: user?.id || null,
+      device_id: deviceId,
+    });
   };
 
   const handleDeleteComment = (commentId: string) => {
-    setComments(comments.filter((c) => c.id !== commentId));
+    if (!id) return;
+    deleteCommentMutation.mutate({ commentId, reviewId: id });
   };
 
-  if (!review && !isLoading) {
+  const handleReportComment = (commentId: string, reason?: string) => {
+    reportCommentMutation.mutate({ commentId, reason });
+  };
+
+  const isLoading = reviewLoading;
+
+  if (!review && !isLoading && reviewError) {
     return (
       <div className="min-h-screen cinema-bg flex items-center justify-center">
         <div className="text-center">
@@ -134,10 +141,10 @@ export default function ReviewDetails() {
           ) : review && (
             <article className="animate-fade-in">
               {/* Poster */}
-              {review.posterUrl && (
+              {review.poster_url && (
                 <div className="relative w-full aspect-[16/9] rounded-xl overflow-hidden mb-6">
                   <img
-                    src={review.posterUrl}
+                    src={review.poster_url}
                     alt={review.title}
                     className="w-full h-full object-cover"
                   />
@@ -156,14 +163,14 @@ export default function ReviewDetails() {
 
                 <div className="flex flex-wrap items-center gap-4 mb-4">
                   <StarRating rating={review.rating} size="md" />
-                  {review.releaseYear && (
+                  {review.release_year && (
                     <span className="text-sm text-muted-foreground">
-                      {review.releaseYear}
+                      {review.release_year}
                     </span>
                   )}
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">
                     <Calendar className="w-4 h-4" />
-                    <span>{format(review.createdAt, 'MMMM d, yyyy')}</span>
+                    <span>{format(new Date(review.created_at), 'MMMM d, yyyy')}</span>
                   </div>
                 </div>
 
@@ -177,7 +184,7 @@ export default function ReviewDetails() {
                   </div>
                 )}
 
-                <HelpfulButton reviewId={review.id} initialCount={review.helpfulCount} />
+                <HelpfulButton reviewId={review.id} initialCount={review.helpful_count} />
               </div>
 
               <Separator className="my-6 bg-border/50" />
@@ -197,8 +204,13 @@ export default function ReviewDetails() {
               <CommentSection
                 reviewId={review.id}
                 comments={comments}
+                isLoading={commentsLoading}
                 onAddComment={handleAddComment}
                 onDeleteComment={handleDeleteComment}
+                onReportComment={handleReportComment}
+                currentUserId={user?.id || null}
+                isAdmin={isAdmin}
+                isLoggedIn={!!user}
               />
             </article>
           )}

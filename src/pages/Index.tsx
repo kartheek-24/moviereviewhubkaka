@@ -1,60 +1,25 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useReviews, useLanguages } from '@/hooks/useReviews';
 import { Header } from '@/components/Header';
 import { Drawer } from '@/components/Drawer';
 import { ReviewCard } from '@/components/ReviewCard';
 import { ReviewCardSkeleton } from '@/components/ReviewCardSkeleton';
 import { SortDropdown } from '@/components/SortDropdown';
 import { EmptyState } from '@/components/EmptyState';
-import { mockReviews } from '@/data/mockData';
 import { LanguageBadge } from '@/components/LanguageBadge';
 import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Index() {
   const { selectedLanguage, setSelectedLanguage, sortBy, searchQuery } = useApp();
-  const [isLoading, setIsLoading] = useState(true);
-
-  // Simulate loading
-  useEffect(() => {
-    const timer = setTimeout(() => setIsLoading(false), 800);
-    return () => clearTimeout(timer);
-  }, []);
-
-  // Filter and sort reviews
-  const filteredReviews = useMemo(() => {
-    let reviews = [...mockReviews];
-
-    // Filter by language
-    if (selectedLanguage) {
-      reviews = reviews.filter((r) => r.language === selectedLanguage);
-    }
-
-    // Filter by search query
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      reviews = reviews.filter((r) => r.titleLower.includes(query));
-    }
-
-    // Sort
-    switch (sortBy) {
-      case 'highest-rated':
-        reviews.sort((a, b) => b.rating - a.rating);
-        break;
-      case 'most-commented':
-        reviews.sort((a, b) => b.commentCount - a.commentCount);
-        break;
-      case 'most-helpful':
-        reviews.sort((a, b) => b.helpfulCount - a.helpfulCount);
-        break;
-      case 'newest':
-      default:
-        reviews.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-        break;
-    }
-
-    return reviews;
-  }, [selectedLanguage, sortBy, searchQuery]);
+  
+  const { data: reviews, isLoading, error } = useReviews({
+    language: selectedLanguage,
+    searchQuery,
+    sortBy,
+  });
 
   return (
     <div className="min-h-screen cinema-bg">
@@ -94,7 +59,12 @@ export default function Index() {
               <ReviewCardSkeleton key={i} />
             ))}
           </div>
-        ) : filteredReviews.length === 0 ? (
+        ) : error ? (
+          <EmptyState
+            type="reviews"
+            message="Failed to load reviews. Please try again."
+          />
+        ) : !reviews || reviews.length === 0 ? (
           <EmptyState
             type={searchQuery ? 'search' : 'reviews'}
             message={
@@ -102,12 +72,12 @@ export default function Index() {
                 ? `No reviews found for "${searchQuery}"`
                 : selectedLanguage
                 ? `No ${selectedLanguage} reviews yet`
-                : undefined
+                : 'No reviews yet. Check back soon!'
             }
           />
         ) : (
           <div className="space-y-4">
-            {filteredReviews.map((review, index) => (
+            {reviews.map((review, index) => (
               <div
                 key={review.id}
                 className="animate-slide-up"

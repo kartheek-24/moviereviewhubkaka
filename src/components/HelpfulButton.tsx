@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ThumbsUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { useToast } from '@/hooks/use-toast';
 import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useHasVoted, useCreateHelpfulVote } from '@/hooks/useReviews';
 
 interface HelpfulButtonProps {
   reviewId: string;
@@ -13,36 +14,43 @@ interface HelpfulButtonProps {
 
 export function HelpfulButton({ reviewId, initialCount, className }: HelpfulButtonProps) {
   const { deviceId } = useApp();
-  const { toast } = useToast();
+  const { user } = useAuth();
   
-  // Check if already voted (persisted in localStorage)
-  const getVoteKey = () => `helpful_${reviewId}`;
-  const hasVotedInitially = localStorage.getItem(getVoteKey()) === 'true';
+  const voterId = user?.id || deviceId;
+  const { data: hasVotedFromDb, isLoading } = useHasVoted(reviewId, voterId);
+  const createVote = useCreateHelpfulVote();
   
-  const [hasVoted, setHasVoted] = useState(hasVotedInitially);
-  const [count, setCount] = useState(initialCount + (hasVotedInitially ? 0 : 0));
+  const [hasVoted, setHasVoted] = useState(false);
+  const [count, setCount] = useState(initialCount);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  const handleVote = () => {
-    if (hasVoted) {
-      toast({
-        title: 'Already voted',
-        description: 'You have already marked this review as helpful.',
-      });
-      return;
+  useEffect(() => {
+    if (hasVotedFromDb !== undefined) {
+      setHasVoted(hasVotedFromDb);
     }
+  }, [hasVotedFromDb]);
+
+  useEffect(() => {
+    setCount(initialCount);
+  }, [initialCount]);
+
+  const handleVote = () => {
+    if (hasVoted || isLoading) return;
 
     setIsAnimating(true);
     setHasVoted(true);
     setCount((prev) => prev + 1);
-    localStorage.setItem(getVoteKey(), 'true');
-    
-    // TODO: Save to database with deviceId or userId
-    console.log('Vote recorded:', { reviewId, deviceId });
 
-    toast({
-      title: 'Thanks!',
-      description: 'Glad you found this review helpful.',
+    createVote.mutate({
+      reviewId,
+      voterUserId: user?.id || null,
+      voterDeviceId: deviceId,
+    }, {
+      onError: () => {
+        // Revert on error
+        setHasVoted(false);
+        setCount((prev) => prev - 1);
+      },
     });
 
     setTimeout(() => setIsAnimating(false), 300);
@@ -53,7 +61,7 @@ export function HelpfulButton({ reviewId, initialCount, className }: HelpfulButt
       variant="outline"
       size="sm"
       onClick={handleVote}
-      disabled={hasVoted}
+      disabled={hasVoted || isLoading}
       className={cn(
         'gap-2 transition-all duration-200',
         hasVoted 

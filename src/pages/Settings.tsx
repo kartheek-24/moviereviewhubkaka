@@ -6,14 +6,13 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { cn } from '@/lib/utils';
-
-// Mock state
-const isLoggedIn = false;
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, signOut, displayName } = useAuth();
+  
   const [pushEnabled, setPushEnabled] = useState(false);
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
 
@@ -54,11 +53,25 @@ export default function Settings() {
   };
 
   const handleClearCache = () => {
+    // Keep deviceId
+    const deviceId = localStorage.getItem('deviceId');
     localStorage.clear();
+    if (deviceId) {
+      localStorage.setItem('deviceId', deviceId);
+    }
     toast({
       title: 'Cache cleared',
       description: 'Local data has been cleared.',
     });
+  };
+
+  const handleLogout = async () => {
+    await signOut();
+    toast({
+      title: 'Logged out',
+      description: 'You have been logged out successfully.',
+    });
+    navigate('/');
   };
 
   return (
@@ -126,17 +139,22 @@ export default function Settings() {
             Account
           </h2>
           <div className="glass-card rounded-xl p-4">
-            {isLoggedIn ? (
+            {user ? (
               <div className="space-y-4">
                 <div>
+                  <p className="text-sm text-muted-foreground">Display Name</p>
+                  <p className="text-foreground">{displayName || 'Not set'}</p>
+                </div>
+                <div>
                   <p className="text-sm text-muted-foreground">Email</p>
-                  <p className="text-foreground">user@example.com</p>
+                  <p className="text-foreground">{user.email}</p>
                 </div>
                 <Separator className="bg-border/50" />
-                <Button variant="outline" className="w-full">
-                  Edit Profile
-                </Button>
-                <Button variant="destructive" className="w-full">
+                <Button 
+                  variant="destructive" 
+                  className="w-full"
+                  onClick={handleLogout}
+                >
                   Logout
                 </Button>
               </div>

@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { MessageCircle, ThumbsUp, Calendar } from 'lucide-react';
-import { Review } from '@/types';
+import { Review } from '@/services/reviewService';
 import { StarRating } from './StarRating';
 import { LanguageBadge } from './LanguageBadge';
 import { cn } from '@/lib/utils';
@@ -23,10 +23,10 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
       <article className="glass-card card-elevated card-hover rounded-xl overflow-hidden">
         <div className="flex gap-4 p-4">
           {/* Poster */}
-          {review.posterUrl && (
+          {review.poster_url && (
             <div className="flex-shrink-0 w-20 h-28 rounded-lg overflow-hidden">
               <img
-                src={review.posterUrl}
+                src={review.poster_url}
                 alt={review.title}
                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
@@ -46,9 +46,9 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
             {/* Rating & Year */}
             <div className="flex items-center gap-3 mb-2">
               <StarRating rating={review.rating} size="sm" />
-              {review.releaseYear && (
+              {review.release_year && (
                 <span className="text-xs text-muted-foreground">
-                  {review.releaseYear}
+                  {review.release_year}
                 </span>
               )}
             </div>
@@ -62,15 +62,15 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
             <div className="flex items-center gap-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-1">
                 <Calendar className="w-3.5 h-3.5" />
-                <span>{format(review.createdAt, 'MMM d, yyyy')}</span>
+                <span>{format(new Date(review.created_at), 'MMM d, yyyy')}</span>
               </div>
               <div className="flex items-center gap-1">
                 <ThumbsUp className="w-3.5 h-3.5" />
-                <span>{review.helpfulCount}</span>
+                <span>{review.helpful_count}</span>
               </div>
               <div className="flex items-center gap-1">
                 <MessageCircle className="w-3.5 h-3.5" />
-                <span>{review.commentCount}</span>
+                <span>{review.comment_count}</span>
               </div>
             </div>
           </div>

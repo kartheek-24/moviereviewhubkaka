@@ -14,7 +14,217 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      app_config: {
+        Row: {
+          admin_email: string
+          created_at: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          admin_email?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          admin_email?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      comments: {
+        Row: {
+          created_at: string
+          device_id: string | null
+          display_name: string
+          id: string
+          is_anonymous: boolean
+          reported: boolean
+          reported_reason: string | null
+          review_id: string
+          text: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_id?: string | null
+          display_name: string
+          id?: string
+          is_anonymous?: boolean
+          reported?: boolean
+          reported_reason?: string | null
+          review_id: string
+          text: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_id?: string | null
+          display_name?: string
+          id?: string
+          is_anonymous?: boolean
+          reported?: boolean
+          reported_reason?: string | null
+          review_id?: string
+          text?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comments_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devices: {
+        Row: {
+          id: string
+          last_seen_at: string
+          platform: string | null
+          push_enabled: boolean
+          push_token: string | null
+        }
+        Insert: {
+          id: string
+          last_seen_at?: string
+          platform?: string | null
+          push_enabled?: boolean
+          push_token?: string | null
+        }
+        Update: {
+          id?: string
+          last_seen_at?: string
+          platform?: string | null
+          push_enabled?: boolean
+          push_token?: string | null
+        }
+        Relationships: []
+      }
+      helpful_votes: {
+        Row: {
+          created_at: string
+          id: string
+          review_id: string
+          voter_device_id: string | null
+          voter_user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id: string
+          review_id: string
+          voter_device_id?: string | null
+          voter_user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          review_id?: string
+          voter_device_id?: string | null
+          voter_user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "helpful_votes_review_id_fkey"
+            columns: ["review_id"]
+            isOneToOne: false
+            referencedRelation: "reviews"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          display_name: string | null
+          email: string | null
+          id: string
+          platform: string | null
+          push_enabled: boolean | null
+          push_token: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id: string
+          platform?: string | null
+          push_enabled?: boolean | null
+          push_token?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string | null
+          email?: string | null
+          id?: string
+          platform?: string | null
+          push_enabled?: boolean | null
+          push_token?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reviews: {
+        Row: {
+          comment_count: number
+          content: string
+          created_at: string
+          created_by: string
+          helpful_count: number
+          id: string
+          language: string
+          poster_url: string | null
+          rating: number
+          release_year: number | null
+          snippet: string
+          tags: string[] | null
+          title: string
+          title_lower: string
+          updated_at: string
+        }
+        Insert: {
+          comment_count?: number
+          content: string
+          created_at?: string
+          created_by: string
+          helpful_count?: number
+          id?: string
+          language: string
+          poster_url?: string | null
+          rating: number
+          release_year?: number | null
+          snippet: string
+          tags?: string[] | null
+          title: string
+          title_lower: string
+          updated_at?: string
+        }
+        Update: {
+          comment_count?: number
+          content?: string
+          created_at?: string
+          created_by?: string
+          helpful_count?: number
+          id?: string
+          language?: string
+          poster_url?: string | null
+          rating?: number
+          release_year?: number | null
+          snippet?: string
+          tags?: string[] | null
+          title?: string
+          title_lower?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never

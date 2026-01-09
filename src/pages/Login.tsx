@@ -1,19 +1,28 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { ArrowLeft, Mail, Lock, Eye, EyeOff, Film } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { useAuth } from '@/contexts/AuthContext';
 
 export default function Login() {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { signIn, user, isLoading: authLoading } = useAuth();
   
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (user && !authLoading) {
+      navigate('/');
+    }
+  }, [user, authLoading, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,16 +38,32 @@ export default function Login() {
 
     setIsLoading(true);
     
-    // Simulate login - will be replaced with real auth
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    const { error } = await signIn(email, password);
     
-    toast({
-      title: 'Login feature coming soon',
-      description: 'Backend integration required for authentication.',
-    });
+    if (error) {
+      toast({
+        title: 'Login failed',
+        description: error.message || 'Invalid email or password.',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Welcome back!',
+        description: 'You have been logged in successfully.',
+      });
+      navigate('/');
+    }
     
     setIsLoading(false);
   };
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen cinema-bg flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen cinema-bg flex flex-col">
