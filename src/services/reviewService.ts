@@ -134,12 +134,12 @@ export async function deleteComment(commentId: string) {
   if (error) throw error;
 }
 
-// Report a comment
+// Report a comment using secure RPC function
 export async function reportComment(commentId: string, reason?: string) {
-  const { error } = await supabase
-    .from('comments')
-    .update({ reported: true, reported_reason: reason || 'Inappropriate content' })
-    .eq('id', commentId);
+  const { error } = await supabase.rpc('report_comment', {
+    comment_id: commentId,
+    reason: reason || 'Inappropriate content',
+  });
 
   if (error) throw error;
 }

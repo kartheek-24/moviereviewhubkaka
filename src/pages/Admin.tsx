@@ -121,25 +121,37 @@ export default function Admin() {
     
     setIsUploading(true);
     try {
-      const fileExt = posterFile.name.split('.').pop();
-      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      // Use secure edge function for server-side validation
+      const formData = new FormData();
+      formData.append('file', posterFile);
       
-      const { error: uploadError } = await supabase.storage
-        .from('posters')
-        .upload(fileName, posterFile);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
       
-      if (uploadError) throw uploadError;
+      if (!accessToken) {
+        throw new Error('Not authenticated');
+      }
+
+      const response = await supabase.functions.invoke('upload-poster', {
+        body: formData,
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Upload failed');
+      }
+
+      const result = response.data;
       
-      const { data: { publicUrl } } = supabase.storage
-        .from('posters')
-        .getPublicUrl(fileName);
+      if (!result.success) {
+        throw new Error(result.error || 'Upload failed');
+      }
       
-      return publicUrl;
-    } catch (error) {
+      return result.url;
+    } catch (error: any) {
       console.error('Upload error:', error);
       toast({
         title: 'Upload failed',
-        description: 'Failed to upload poster image. Please try again.',
+        description: error.message || 'Failed to upload poster image. Please try again.',
         variant: 'destructive',
       });
       return null;

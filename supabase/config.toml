@@ -1,1 +1,4 @@
 project_id = "kdmsoswzdmbhierhjsks"
+
+[functions.upload-poster]
+verify_jwt = false

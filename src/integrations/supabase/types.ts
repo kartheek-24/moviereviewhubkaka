@@ -230,7 +230,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      report_comment: {
+        Args: { comment_id: string; reason?: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
