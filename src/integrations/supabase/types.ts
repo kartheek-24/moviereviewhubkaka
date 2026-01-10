@@ -182,7 +182,7 @@ export type Database = {
           language: string
           poster_url: string | null
           rating: number
-          release_year: number | null
+          release_date: string | null
           snippet: string
           tags: string[] | null
           title: string
@@ -199,7 +199,7 @@ export type Database = {
           language: string
           poster_url?: string | null
           rating: number
-          release_year?: number | null
+          release_date?: string | null
           snippet: string
           tags?: string[] | null
           title: string
@@ -216,7 +216,7 @@ export type Database = {
           language?: string
           poster_url?: string | null
           rating?: number
-          release_year?: number | null
+          release_date?: string | null
           snippet?: string
           tags?: string[] | null
           title?: string

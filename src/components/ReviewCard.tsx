@@ -43,12 +43,12 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
               <LanguageBadge language={review.language} />
             </div>
             
-            {/* Rating & Year */}
+            {/* Rating & Date */}
             <div className="flex items-center gap-3 mb-2">
               <StarRating rating={review.rating} size="sm" />
-              {review.release_year && (
+              {review.release_date && (
                 <span className="text-xs text-muted-foreground">
-                  {review.release_year}
+                  {format(new Date(review.release_date), 'MMM d, yyyy')}
                 </span>
               )}
             </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, MessageCircle, Flag, Image } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, MessageCircle, Flag, Image, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -9,12 +9,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter, DialogClose } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
 import { StarRating } from '@/components/StarRating';
 import { useAuth } from '@/contexts/AuthContext';
 import { useReviews, useCreateReview, useUpdateReview, useDeleteReview, useReportedComments, useDeleteComment } from '@/hooks/useReviews';
 import { Review } from '@/services/reviewService';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 const LANGUAGES = ['English', 'Telugu', 'Hindi', 'Kannada', 'Tamil', 'Malayalam', 'Korean', 'Japanese', 'Spanish', 'French'];
 
@@ -43,7 +46,7 @@ export default function Admin() {
   const [content, setContent] = useState('');
   const [posterUrl, setPosterUrl] = useState('');
   const [tags, setTags] = useState('');
-  const [releaseYear, setReleaseYear] = useState('');
+  const [releaseDate, setReleaseDate] = useState<Date | undefined>(undefined);
 
   // Redirect if not admin
   useEffect(() => {
@@ -65,7 +68,7 @@ export default function Admin() {
     setContent('');
     setPosterUrl('');
     setTags('');
-    setReleaseYear('');
+    setReleaseDate(undefined);
   };
 
   const openEditDialog = (review: Review) => {
@@ -77,7 +80,7 @@ export default function Admin() {
     setContent(review.content);
     setPosterUrl(review.poster_url || '');
     setTags(review.tags?.join(', ') || '');
-    setReleaseYear(review.release_year?.toString() || '');
+    setReleaseDate(review.release_date ? new Date(review.release_date) : undefined);
   };
 
   const handleCreate = () => {
@@ -98,7 +101,7 @@ export default function Admin() {
       content,
       poster_url: posterUrl || null,
       tags: tags ? tags.split(',').map(t => t.trim()) : null,
-      release_year: releaseYear ? parseInt(releaseYear) : null,
+      release_date: releaseDate ? format(releaseDate, 'yyyy-MM-dd') : null,
       created_by: user.id,
     }, {
       onSuccess: () => {
@@ -128,7 +131,7 @@ export default function Admin() {
         content,
         poster_url: posterUrl || null,
         tags: tags ? tags.split(',').map(t => t.trim()) : null,
-        release_year: releaseYear ? parseInt(releaseYear) : null,
+        release_date: releaseDate ? format(releaseDate, 'yyyy-MM-dd') : null,
       },
     }, {
       onSuccess: () => {
@@ -249,15 +252,30 @@ export default function Admin() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor="releaseYear">Release Year</Label>
-          <Input
-            id="releaseYear"
-            type="number"
-            value={releaseYear}
-            onChange={(e) => setReleaseYear(e.target.value)}
-            placeholder="2024"
-            className="bg-muted border-0"
-          />
+          <Label>Release Date</Label>
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className={cn(
+                  "w-full justify-start text-left font-normal bg-muted border-0",
+                  !releaseDate && "text-muted-foreground"
+                )}
+              >
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {releaseDate ? format(releaseDate, "PPP") : <span>Pick a date</span>}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0" align="start">
+              <Calendar
+                mode="single"
+                selected={releaseDate}
+                onSelect={setReleaseDate}
+                initialFocus
+                className={cn("p-3 pointer-events-auto")}
+              />
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
