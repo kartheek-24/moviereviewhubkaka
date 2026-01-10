@@ -163,9 +163,9 @@ export default function ReviewDetails() {
 
                 <div className="flex flex-wrap items-center gap-4 mb-4">
                   <StarRating rating={review.rating} size="md" />
-                  {review.release_year && (
+                  {review.release_date && (
                     <span className="text-sm text-muted-foreground">
-                      {review.release_year}
+                      Released: {format(new Date(review.release_date), 'MMMM d, yyyy')}
                     </span>
                   )}
                   <div className="flex items-center gap-1 text-sm text-muted-foreground">

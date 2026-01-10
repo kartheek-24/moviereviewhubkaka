@@ -8,7 +8,7 @@ export interface Review {
   content: string;
   posterUrl?: string;
   tags?: string[];
-  releaseYear?: number;
+  releaseDate?: string;
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;

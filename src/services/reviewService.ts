@@ -11,7 +11,7 @@ export interface Review {
   content: string;
   poster_url: string | null;
   tags: string[] | null;
-  release_year: number | null;
+  release_date: string | null;
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -208,7 +208,7 @@ export async function createReview(review: {
   content: string;
   poster_url?: string | null;
   tags?: string[] | null;
-  release_year?: number | null;
+  release_date?: string | null;
   created_by: string;
 }) {
   const { data, error } = await supabase
@@ -235,7 +235,7 @@ export async function updateReview(
     content: string;
     poster_url: string | null;
     tags: string[] | null;
-    release_year: number | null;
+    release_date: string | null;
   }>
 ) {
   const updates: Record<string, unknown> = { ...review };
