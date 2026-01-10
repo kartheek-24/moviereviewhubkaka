@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, MessageCircle, Flag, Image, CalendarIcon } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, MessageCircle, Flag, Image, CalendarIcon, Upload, Link, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,6 +18,7 @@ import { Review } from '@/services/reviewService';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 const LANGUAGES = ['English', 'Telugu', 'Hindi', 'Kannada', 'Tamil', 'Malayalam', 'Korean', 'Japanese', 'Spanish', 'French'];
 
@@ -47,6 +48,11 @@ export default function Admin() {
   const [posterUrl, setPosterUrl] = useState('');
   const [tags, setTags] = useState('');
   const [releaseDate, setReleaseDate] = useState<Date | undefined>(undefined);
+  const [posterInputMode, setPosterInputMode] = useState<'url' | 'file'>('url');
+  const [posterFile, setPosterFile] = useState<File | null>(null);
+  const [posterPreview, setPosterPreview] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Redirect if not admin
   useEffect(() => {
@@ -69,6 +75,77 @@ export default function Admin() {
     setPosterUrl('');
     setTags('');
     setReleaseDate(undefined);
+    setPosterInputMode('url');
+    setPosterFile(null);
+    setPosterPreview(null);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Invalid file type',
+          description: 'Please select an image file.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: 'File too large',
+          description: 'Please select an image under 5MB.',
+          variant: 'destructive',
+        });
+        return;
+      }
+      setPosterFile(file);
+      setPosterPreview(URL.createObjectURL(file));
+      setPosterUrl(''); // Clear URL when file is selected
+    }
+  };
+
+  const clearPosterFile = () => {
+    setPosterFile(null);
+    if (posterPreview) {
+      URL.revokeObjectURL(posterPreview);
+    }
+    setPosterPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const uploadPosterFile = async (): Promise<string | null> => {
+    if (!posterFile) return null;
+    
+    setIsUploading(true);
+    try {
+      const fileExt = posterFile.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('posters')
+        .upload(fileName, posterFile);
+      
+      if (uploadError) throw uploadError;
+      
+      const { data: { publicUrl } } = supabase.storage
+        .from('posters')
+        .getPublicUrl(fileName);
+      
+      return publicUrl;
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Upload failed',
+        description: 'Failed to upload poster image. Please try again.',
+        variant: 'destructive',
+      });
+      return null;
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const openEditDialog = (review: Review) => {
@@ -83,7 +160,7 @@ export default function Admin() {
     setReleaseDate(review.release_date ? new Date(review.release_date) : undefined);
   };
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!title || !language || !snippet || !content || !user) {
       toast({
         title: 'Missing fields',
@@ -93,13 +170,23 @@ export default function Admin() {
       return;
     }
 
+    let finalPosterUrl = posterUrl || null;
+    
+    // Upload file if selected
+    if (posterFile) {
+      const uploadedUrl = await uploadPosterFile();
+      if (uploadedUrl) {
+        finalPosterUrl = uploadedUrl;
+      }
+    }
+
     createReview.mutate({
       title,
       language,
       rating,
       snippet,
       content,
-      poster_url: posterUrl || null,
+      poster_url: finalPosterUrl,
       tags: tags ? tags.split(',').map(t => t.trim()) : null,
       release_date: releaseDate ? format(releaseDate, 'yyyy-MM-dd') : null,
       created_by: user.id,
@@ -111,7 +198,7 @@ export default function Admin() {
     });
   };
 
-  const handleUpdate = () => {
+  const handleUpdate = async () => {
     if (!editingReview || !title || !language || !snippet || !content) {
       toast({
         title: 'Missing fields',
@@ -119,6 +206,16 @@ export default function Admin() {
         variant: 'destructive',
       });
       return;
+    }
+
+    let finalPosterUrl = posterUrl || null;
+    
+    // Upload file if selected
+    if (posterFile) {
+      const uploadedUrl = await uploadPosterFile();
+      if (uploadedUrl) {
+        finalPosterUrl = uploadedUrl;
+      }
     }
 
     updateReview.mutate({
@@ -129,7 +226,7 @@ export default function Admin() {
         rating,
         snippet,
         content,
-        poster_url: posterUrl || null,
+        poster_url: finalPosterUrl,
         tags: tags ? tags.split(',').map(t => t.trim()) : null,
         release_date: releaseDate ? format(releaseDate, 'yyyy-MM-dd') : null,
       },
@@ -224,19 +321,99 @@ export default function Admin() {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="posterUrl">Poster URL (optional)</Label>
-        <div className="flex gap-2">
-          <Input
-            id="posterUrl"
-            value={posterUrl}
-            onChange={(e) => setPosterUrl(e.target.value)}
-            placeholder="https://..."
-            className="bg-muted border-0"
-          />
-          <Button variant="outline" size="icon" type="button">
-            <Image className="w-4 h-4" />
+        <Label>Poster Image (optional)</Label>
+        <div className="flex gap-2 mb-2">
+          <Button
+            type="button"
+            variant={posterInputMode === 'url' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => {
+              setPosterInputMode('url');
+              clearPosterFile();
+            }}
+          >
+            <Link className="w-4 h-4 mr-1" />
+            URL
+          </Button>
+          <Button
+            type="button"
+            variant={posterInputMode === 'file' ? 'default' : 'outline'}
+            size="sm"
+            onClick={() => {
+              setPosterInputMode('file');
+              setPosterUrl('');
+            }}
+          >
+            <Upload className="w-4 h-4 mr-1" />
+            Upload
           </Button>
         </div>
+        
+        {posterInputMode === 'url' ? (
+          <div className="flex gap-2">
+            <Input
+              id="posterUrl"
+              value={posterUrl}
+              onChange={(e) => setPosterUrl(e.target.value)}
+              placeholder="https://..."
+              className="bg-muted border-0"
+            />
+            {posterUrl && (
+              <img 
+                src={posterUrl} 
+                alt="Poster preview" 
+                className="w-10 h-14 object-cover rounded"
+                onError={(e) => (e.currentTarget.style.display = 'none')}
+              />
+            )}
+          </div>
+        ) : (
+          <div className="space-y-2">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            {posterPreview ? (
+              <div className="flex items-center gap-3 p-3 bg-muted rounded-lg">
+                <img 
+                  src={posterPreview} 
+                  alt="Poster preview" 
+                  className="w-16 h-24 object-cover rounded"
+                />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground truncate">{posterFile?.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {posterFile && (posterFile.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={clearPosterFile}
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+            ) : (
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-24 border-dashed bg-muted border-muted-foreground/30"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div className="flex flex-col items-center gap-1">
+                  <Upload className="w-6 h-6 text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">Click to upload image</span>
+                  <span className="text-xs text-muted-foreground/70">Max 5MB</span>
+                </div>
+              </Button>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="grid grid-cols-2 gap-4">
@@ -283,8 +460,11 @@ export default function Admin() {
         <DialogClose asChild>
           <Button variant="outline" onClick={resetForm}>Cancel</Button>
         </DialogClose>
-        <Button onClick={onSubmit} disabled={createReview.isPending || updateReview.isPending}>
-          {createReview.isPending || updateReview.isPending ? 'Saving...' : submitLabel}
+        <Button 
+          onClick={onSubmit} 
+          disabled={createReview.isPending || updateReview.isPending || isUploading}
+        >
+          {isUploading ? 'Uploading...' : (createReview.isPending || updateReview.isPending ? 'Saving...' : submitLabel)}
         </Button>
       </div>
     </div>
