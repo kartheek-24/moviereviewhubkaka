@@ -276,27 +276,24 @@ export async function fetchReportedComments() {
   return data;
 }
 
-// Register device for push notifications
+// Register device for push notifications using secure RPC
 export async function registerDevice(deviceId: string, pushToken?: string, platform?: string) {
-  const { error } = await supabase
-    .from('devices')
-    .upsert({
-      id: deviceId,
-      push_token: pushToken,
-      push_enabled: true,
-      platform,
-      last_seen_at: new Date().toISOString(),
-    });
+  const { error } = await supabase.rpc('register_device', {
+    p_device_id: deviceId,
+    p_push_token: pushToken || null,
+    p_platform: platform || null,
+    p_push_enabled: true,
+  });
 
   if (error) throw error;
 }
 
-// Update push settings for device
+// Update push settings for device using secure RPC
 export async function updateDevicePushSettings(deviceId: string, enabled: boolean) {
-  const { error } = await supabase
-    .from('devices')
-    .update({ push_enabled: enabled })
-    .eq('id', deviceId);
+  const { error } = await supabase.rpc('update_device_push', {
+    p_device_id: deviceId,
+    p_push_enabled: enabled,
+  });
 
   if (error) throw error;
 }
