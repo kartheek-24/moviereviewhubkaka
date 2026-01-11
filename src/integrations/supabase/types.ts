@@ -89,6 +89,7 @@ export type Database = {
           platform: string | null
           push_enabled: boolean
           push_token: string | null
+          user_id: string | null
         }
         Insert: {
           id: string
@@ -96,6 +97,7 @@ export type Database = {
           platform?: string | null
           push_enabled?: boolean
           push_token?: string | null
+          user_id?: string | null
         }
         Update: {
           id?: string
@@ -103,6 +105,7 @@ export type Database = {
           platform?: string | null
           push_enabled?: boolean
           push_token?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -227,11 +230,47 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          created_at: string | null
+          display_name: string | null
+          id: string | null
+          platform: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          platform?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          display_name?: string | null
+          id?: string | null
+          platform?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
+      register_device: {
+        Args: {
+          p_device_id: string
+          p_platform?: string
+          p_push_enabled?: boolean
+          p_push_token?: string
+        }
+        Returns: undefined
+      }
       report_comment: {
         Args: { comment_id: string; reason?: string }
+        Returns: undefined
+      }
+      update_device_push: {
+        Args: { p_device_id: string; p_push_enabled: boolean }
         Returns: undefined
       }
     }
