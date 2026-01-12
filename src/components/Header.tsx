@@ -39,12 +39,19 @@ export function Header({
             )}
             
             {!isSearchOpen && (
-              <h1 className="font-display font-semibold text-lg">
-                <span className="text-foreground">{title.replace('By Kaka', '')}</span>
-                {title.includes('By Kaka') && (
-                  <span className="gold-text ml-1">By Kaka</span>
-                )}
-              </h1>
+              <div className="flex items-center gap-2">
+                <img 
+                  src="/favicon.png" 
+                  alt="MovieReviewHub" 
+                  className="w-7 h-7 rounded-md"
+                />
+                <h1 className="font-display font-semibold text-lg">
+                  <span className="text-foreground">{title.replace('By Kaka', '')}</span>
+                  {title.includes('By Kaka') && (
+                    <span className="gold-text ml-1">By Kaka</span>
+                  )}
+                </h1>
+              </div>
             )}
           </div>
           
