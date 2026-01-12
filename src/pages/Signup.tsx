@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { PasswordStrengthIndicator } from '@/components/PasswordStrengthIndicator';
 
 export default function Signup() {
   const navigate = useNavigate();
@@ -178,6 +179,7 @@ export default function Signup() {
                 )}
               </button>
             </div>
+            <PasswordStrengthIndicator password={password} />
           </div>
 
           <div className="space-y-2">
