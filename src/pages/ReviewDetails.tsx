@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
 import { useReview, useComments, useCreateComment, useDeleteComment, useReportComment } from '@/hooks/useReviews';
@@ -8,19 +8,19 @@ import { StarRating } from '@/components/StarRating';
 import { LanguageBadge } from '@/components/LanguageBadge';
 import { HelpfulButton } from '@/components/HelpfulButton';
 import { CommentSection } from '@/components/CommentSection';
+import { ShareDialog } from '@/components/ShareDialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
-import { useToast } from '@/hooks/use-toast';
 
 export default function ReviewDetails() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { toast } = useToast();
   const { user, isAdmin, displayName: authDisplayName } = useAuth();
   const { deviceId } = useApp();
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   
   const { data: review, isLoading: reviewLoading, error: reviewError } = useReview(id);
   const { data: comments = [], isLoading: commentsLoading } = useComments(id);
@@ -29,64 +29,11 @@ export default function ReviewDetails() {
   const deleteCommentMutation = useDeleteComment();
   const reportCommentMutation = useReportComment();
 
-  const handleShare = async () => {
-    if (!review) {
-      toast({
-        title: 'Unable to share',
-        description: 'Review data is not available yet.',
-        variant: 'destructive',
-      });
-      return;
-    }
+  const shareUrl = review ? `${window.location.origin}/review/${review.id}` : '';
 
-    const shareUrl = `${window.location.origin}/review/${review.id}`;
-    
-    // Try native share first (mobile)
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `${review.title} - MovieReviewHub`,
-          text: review.snippet,
-          url: shareUrl,
-        });
-        return;
-      } catch (error) {
-        // User cancelled or share failed, fall through to clipboard
-        if ((error as Error).name === 'AbortError') {
-          return; // User cancelled, no need for fallback
-        }
-      }
-    }
-    
-    // Fallback to clipboard
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      toast({
-        title: 'Link copied!',
-        description: 'Review link has been copied to your clipboard.',
-      });
-    } catch {
-      // Final fallback for older browsers
-      const textArea = document.createElement('textarea');
-      textArea.value = shareUrl;
-      textArea.style.position = 'fixed';
-      textArea.style.left = '-999999px';
-      document.body.appendChild(textArea);
-      textArea.select();
-      try {
-        document.execCommand('copy');
-        toast({
-          title: 'Link copied!',
-          description: 'Review link has been copied to your clipboard.',
-        });
-      } catch {
-        toast({
-          title: 'Share link',
-          description: shareUrl,
-        });
-      }
-      document.body.removeChild(textArea);
-    }
+  const handleShare = () => {
+    if (!review) return;
+    setShareDialogOpen(true);
   };
 
   const handleAddComment = (text: string, isAnonymous: boolean) => {
@@ -256,6 +203,16 @@ export default function ReviewDetails() {
           )}
         </main>
       </ScrollArea>
+
+      {review && (
+        <ShareDialog
+          open={shareDialogOpen}
+          onOpenChange={setShareDialogOpen}
+          title={review.title}
+          text={review.snippet}
+          url={shareUrl}
+        />
+      )}
     </div>
   );
 }
