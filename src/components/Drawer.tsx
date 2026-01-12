@@ -7,9 +7,9 @@ import {
   Shield, 
   LogIn, 
   UserPlus, 
-  User, 
   LogOut,
-  Film
+  Film,
+  BarChart3
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
@@ -173,6 +173,15 @@ export function Drawer() {
                       </Link>
                     </li>
                   )}
+                  <li>
+                    <Link
+                      to="/analytics"
+                      className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+                    >
+                      <BarChart3 className="w-4 h-4" />
+                      Analytics
+                    </Link>
+                  </li>
                 </ul>
               </div>
               
