@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
+import { ArrowLeft, Calendar, Share2, Home } from 'lucide-react';
 import { useReview, useComments, useCreateComment, useDeleteComment, useReportComment, useUserReactions, useToggleCommentReaction } from '@/hooks/useReviews';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
@@ -116,20 +116,30 @@ export default function ReviewDetails() {
       <header className="sticky top-0 z-40 w-full safe-area-inset-top">
         <div className="glass-card border-b border-border/50">
           <div className="container flex items-center justify-between h-14 px-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => {
-                if (window.history.length > 1) {
-                  navigate(-1);
-                } else {
-                  navigate('/');
-                }
-              }}
-              className="text-foreground hover:bg-muted"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => {
+                  if (window.history.length > 1) {
+                    navigate(-1);
+                  } else {
+                    navigate('/');
+                  }
+                }}
+                className="text-foreground hover:bg-muted"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate('/')}
+                className="text-foreground hover:bg-muted"
+              >
+                <Home className="h-5 w-5" />
+              </Button>
+            </div>
             <h1 className="font-semibold text-foreground truncate max-w-[200px]">
               {isLoading ? 'Loading...' : review?.title}
             </h1>
