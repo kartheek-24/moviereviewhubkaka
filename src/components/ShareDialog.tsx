@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Copy, Check, X, Facebook, MessageCircle, QrCode } from 'lucide-react';
+import { Copy, Check, Facebook, MessageCircle, QrCode, AlertCircle } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ShareDialogProps {
   open: boolean;
@@ -36,13 +37,31 @@ export function ShareDialog({ open, onOpenChange, title, text, url }: ShareDialo
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
+  // Check if we're in preview mode (lovableproject.com URLs are not publicly accessible)
+  const isPreviewMode = useMemo(() => {
+    return window.location.hostname.includes('lovableproject.com');
+  }, []);
+
+  // Get the shareable URL - use the published URL if available
+  const shareableUrl = useMemo(() => {
+    // If we're on a custom domain or lovable.app, use the current URL
+    if (!isPreviewMode) {
+      return url;
+    }
+    // In preview mode, construct a relative path that will work once published
+    const path = new URL(url).pathname;
+    return `${window.location.origin}${path}`;
+  }, [url, isPreviewMode]);
+
   const handleCopyLink = async () => {
     try {
-      await navigator.clipboard.writeText(url);
+      await navigator.clipboard.writeText(shareableUrl);
       setCopied(true);
       toast({
         title: 'Link copied!',
-        description: 'Review link has been copied to your clipboard.',
+        description: isPreviewMode 
+          ? 'Link copied. Note: Publish your app for the link to work publicly.'
+          : 'Review link has been copied to your clipboard.',
       });
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -55,17 +74,17 @@ export function ShareDialog({ open, onOpenChange, title, text, url }: ShareDialo
   };
 
   const shareToTwitter = () => {
-    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+    const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareableUrl)}`;
     window.open(twitterUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
   };
 
   const shareToFacebook = () => {
-    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`;
+    const facebookUrl = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareableUrl)}`;
     window.open(facebookUrl, '_blank', 'noopener,noreferrer,width=600,height=400');
   };
 
   const shareToWhatsApp = () => {
-    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${text} ${url}`)}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(`${text} ${shareableUrl}`)}`;
     window.open(whatsappUrl, '_blank', 'noopener,noreferrer');
   };
 
@@ -104,6 +123,15 @@ export function ShareDialog({ open, onOpenChange, title, text, url }: ShareDialo
         <DialogHeader>
           <DialogTitle className="text-center">Share Review</DialogTitle>
         </DialogHeader>
+
+        {isPreviewMode && (
+          <Alert variant="default" className="border-amber-500/50 bg-amber-500/10">
+            <AlertCircle className="h-4 w-4 text-amber-500" />
+            <AlertDescription className="text-sm text-amber-200">
+              You're in preview mode. <strong>Publish your app</strong> to share links that work publicly.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <Tabs defaultValue="social" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -154,7 +182,7 @@ export function ShareDialog({ open, onOpenChange, title, text, url }: ShareDialo
             {/* Copy Link */}
             <div className="flex items-center gap-2">
               <Input
-                value={url}
+                value={shareableUrl}
                 readOnly
                 className="flex-1 text-sm bg-muted"
               />
@@ -178,7 +206,7 @@ export function ShareDialog({ open, onOpenChange, title, text, url }: ShareDialo
               <div className="bg-white p-4 rounded-lg">
                 <QRCodeSVG
                   id="share-qr-code"
-                  value={url}
+                  value={shareableUrl}
                   size={200}
                   level="H"
                   includeMargin
@@ -193,7 +221,9 @@ export function ShareDialog({ open, onOpenChange, title, text, url }: ShareDialo
                 />
               </div>
               <p className="text-sm text-muted-foreground text-center">
-                Scan this QR code to open the review on another device
+                {isPreviewMode 
+                  ? 'QR code will work after publishing your app'
+                  : 'Scan this QR code to open the review on another device'}
               </p>
               <Button onClick={handleDownloadQR} variant="outline" className="w-full">
                 Download QR Code
