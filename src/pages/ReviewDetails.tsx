@@ -30,22 +30,62 @@ export default function ReviewDetails() {
   const reportCommentMutation = useReportComment();
 
   const handleShare = async () => {
-    if (navigator.share && review) {
+    if (!review) {
+      toast({
+        title: 'Unable to share',
+        description: 'Review data is not available yet.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const shareUrl = `${window.location.origin}/review/${review.id}`;
+    
+    // Try native share first (mobile)
+    if (navigator.share) {
       try {
         await navigator.share({
           title: `${review.title} - MovieReviewHub`,
           text: review.snippet,
-          url: window.location.href,
+          url: shareUrl,
+        });
+        return;
+      } catch (error) {
+        // User cancelled or share failed, fall through to clipboard
+        if ((error as Error).name === 'AbortError') {
+          return; // User cancelled, no need for fallback
+        }
+      }
+    }
+    
+    // Fallback to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      toast({
+        title: 'Link copied!',
+        description: 'Review link has been copied to your clipboard.',
+      });
+    } catch {
+      // Final fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = shareUrl;
+      textArea.style.position = 'fixed';
+      textArea.style.left = '-999999px';
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        toast({
+          title: 'Link copied!',
+          description: 'Review link has been copied to your clipboard.',
         });
       } catch {
-        // User cancelled or share failed
+        toast({
+          title: 'Share link',
+          description: shareUrl,
+        });
       }
-    } else {
-      await navigator.clipboard.writeText(window.location.href);
-      toast({
-        title: 'Link copied',
-        description: 'Review link copied to clipboard.',
-      });
+      document.body.removeChild(textArea);
     }
   };
 
