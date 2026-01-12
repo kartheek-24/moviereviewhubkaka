@@ -30,6 +30,21 @@ export interface Comment {
   created_at: string;
   reported: boolean;
   reported_reason: string | null;
+  parent_id: string | null;
+  like_count: number;
+  dislike_count: number;
+  love_count: number;
+}
+
+export type ReactionType = 'like' | 'dislike' | 'love';
+
+export interface CommentReaction {
+  id: string;
+  comment_id: string;
+  reaction_type: ReactionType;
+  user_id: string | null;
+  device_id: string | null;
+  created_at: string;
 }
 
 export interface HelpfulVote {
@@ -105,7 +120,7 @@ export async function fetchCommentsByReviewId(reviewId: string) {
   return data as Comment[];
 }
 
-// Create a comment
+// Create a comment (with optional parent_id for replies)
 export async function createComment(comment: {
   review_id: string;
   text: string;
@@ -113,6 +128,7 @@ export async function createComment(comment: {
   display_name: string;
   user_id: string | null;
   device_id: string | null;
+  parent_id?: string | null;
 }) {
   const { data, error } = await supabase
     .from('comments')
@@ -122,6 +138,75 @@ export async function createComment(comment: {
 
   if (error) throw error;
   return data as Comment;
+}
+
+// Fetch user's reactions for comments
+export async function fetchUserReactions(
+  commentIds: string[],
+  userId: string | null,
+  deviceId: string
+) {
+  const { data, error } = await supabase
+    .from('comment_reactions')
+    .select('*')
+    .in('comment_id', commentIds)
+    .or(`user_id.eq.${userId},device_id.eq.${deviceId}`);
+
+  if (error) throw error;
+  return data as CommentReaction[];
+}
+
+// Toggle reaction on a comment
+export async function toggleCommentReaction(
+  commentId: string,
+  reactionType: ReactionType,
+  userId: string | null,
+  deviceId: string
+) {
+  // Check if user already has a reaction on this comment
+  const { data: existingReaction, error: fetchError } = await supabase
+    .from('comment_reactions')
+    .select('*')
+    .eq('comment_id', commentId)
+    .or(`user_id.eq.${userId},device_id.eq.${deviceId}`)
+    .maybeSingle();
+
+  if (fetchError) throw fetchError;
+
+  // If same reaction exists, remove it (toggle off)
+  if (existingReaction && existingReaction.reaction_type === reactionType) {
+    const { error: deleteError } = await supabase
+      .from('comment_reactions')
+      .delete()
+      .eq('id', existingReaction.id);
+    
+    if (deleteError) throw deleteError;
+    return { action: 'removed' as const, reactionType };
+  }
+
+  // If different reaction exists, update it
+  if (existingReaction) {
+    const { error: updateError } = await supabase
+      .from('comment_reactions')
+      .update({ reaction_type: reactionType })
+      .eq('id', existingReaction.id);
+    
+    if (updateError) throw updateError;
+    return { action: 'changed' as const, reactionType, previousType: existingReaction.reaction_type as ReactionType };
+  }
+
+  // No reaction exists, create new one
+  const { error: insertError } = await supabase
+    .from('comment_reactions')
+    .insert({
+      comment_id: commentId,
+      reaction_type: reactionType,
+      user_id: userId,
+      device_id: deviceId,
+    });
+
+  if (insertError) throw insertError;
+  return { action: 'added' as const, reactionType };
 }
 
 // Delete a comment

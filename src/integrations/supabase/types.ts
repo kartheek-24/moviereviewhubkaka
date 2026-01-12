@@ -35,13 +35,52 @@ export type Database = {
         }
         Relationships: []
       }
+      comment_reactions: {
+        Row: {
+          comment_id: string
+          created_at: string
+          device_id: string | null
+          id: string
+          reaction_type: string
+          user_id: string | null
+        }
+        Insert: {
+          comment_id: string
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          reaction_type: string
+          user_id?: string | null
+        }
+        Update: {
+          comment_id?: string
+          created_at?: string
+          device_id?: string | null
+          id?: string
+          reaction_type?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comment_reactions_comment_id_fkey"
+            columns: ["comment_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comments: {
         Row: {
           created_at: string
           device_id: string | null
+          dislike_count: number
           display_name: string
           id: string
           is_anonymous: boolean
+          like_count: number
+          love_count: number
+          parent_id: string | null
           reported: boolean
           reported_reason: string | null
           review_id: string
@@ -51,9 +90,13 @@ export type Database = {
         Insert: {
           created_at?: string
           device_id?: string | null
+          dislike_count?: number
           display_name: string
           id?: string
           is_anonymous?: boolean
+          like_count?: number
+          love_count?: number
+          parent_id?: string | null
           reported?: boolean
           reported_reason?: string | null
           review_id: string
@@ -63,9 +106,13 @@ export type Database = {
         Update: {
           created_at?: string
           device_id?: string | null
+          dislike_count?: number
           display_name?: string
           id?: string
           is_anonymous?: boolean
+          like_count?: number
+          love_count?: number
+          parent_id?: string | null
           reported?: boolean
           reported_reason?: string | null
           review_id?: string
@@ -73,6 +120,13 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "comments"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "comments_review_id_fkey"
             columns: ["review_id"]

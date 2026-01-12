@@ -13,8 +13,11 @@ import {
   updateReview,
   deleteReview,
   fetchReportedComments,
+  fetchUserReactions,
+  toggleCommentReaction,
   Review,
   Comment,
+  ReactionType,
 } from '@/services/reviewService';
 import { SortOption } from '@/types';
 import { useToast } from '@/hooks/use-toast';
@@ -47,6 +50,38 @@ export function useComments(reviewId: string | undefined) {
     queryKey: ['comments', reviewId],
     queryFn: () => fetchCommentsByReviewId(reviewId!),
     enabled: !!reviewId,
+  });
+}
+
+// Hook to fetch user reactions for comments
+export function useUserReactions(
+  commentIds: string[],
+  userId: string | null,
+  deviceId: string | undefined
+) {
+  return useQuery({
+    queryKey: ['userReactions', commentIds, userId, deviceId],
+    queryFn: () => fetchUserReactions(commentIds, userId, deviceId!),
+    enabled: commentIds.length > 0 && !!deviceId,
+  });
+}
+
+// Hook to toggle comment reaction
+export function useToggleCommentReaction() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ commentId, reactionType, userId, deviceId }: {
+      commentId: string;
+      reactionType: ReactionType;
+      userId: string | null;
+      deviceId: string;
+      reviewId: string;
+    }) => toggleCommentReaction(commentId, reactionType, userId, deviceId),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['comments', variables.reviewId] });
+      queryClient.invalidateQueries({ queryKey: ['userReactions'] });
+    },
   });
 }
 
