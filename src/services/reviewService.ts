@@ -146,11 +146,19 @@ export async function fetchUserReactions(
   userId: string | null,
   deviceId: string
 ) {
-  const { data, error } = await supabase
+  // Build the filter based on what identifiers we have
+  let query = supabase
     .from('comment_reactions')
     .select('*')
-    .in('comment_id', commentIds)
-    .or(`user_id.eq.${userId},device_id.eq.${deviceId}`);
+    .in('comment_id', commentIds);
+
+  if (userId) {
+    query = query.or(`user_id.eq.${userId},device_id.eq.${deviceId}`);
+  } else {
+    query = query.eq('device_id', deviceId);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
   return data as CommentReaction[];
@@ -163,12 +171,20 @@ export async function toggleCommentReaction(
   userId: string | null,
   deviceId: string
 ) {
+  // Build the filter based on what identifiers we have
+  let filterQuery;
+  if (userId) {
+    filterQuery = `user_id.eq.${userId},device_id.eq.${deviceId}`;
+  } else {
+    filterQuery = `device_id.eq.${deviceId}`;
+  }
+
   // Check if user already has a reaction on this comment
   const { data: existingReaction, error: fetchError } = await supabase
     .from('comment_reactions')
     .select('*')
     .eq('comment_id', commentId)
-    .or(`user_id.eq.${userId},device_id.eq.${deviceId}`)
+    .or(userId ? `user_id.eq.${userId},device_id.eq.${deviceId}` : `device_id.eq.${deviceId}`)
     .maybeSingle();
 
   if (fetchError) throw fetchError;

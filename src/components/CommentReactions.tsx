@@ -12,7 +12,6 @@ interface CommentReactionsProps {
   loveCount: number;
   userReaction: ReactionType | null;
   onReact: (commentId: string, reactionType: ReactionType) => void;
-  disabled?: boolean;
 }
 
 export function CommentReactions({
@@ -22,12 +21,10 @@ export function CommentReactions({
   loveCount,
   userReaction,
   onReact,
-  disabled = false,
 }: CommentReactionsProps) {
   const [isAnimating, setIsAnimating] = useState<ReactionType | null>(null);
 
   const handleReact = (type: ReactionType) => {
-    if (disabled) return;
     setIsAnimating(type);
     onReact(commentId, type);
     setTimeout(() => setIsAnimating(null), 300);
@@ -39,7 +36,6 @@ export function CommentReactions({
         variant="ghost"
         size="sm"
         onClick={() => handleReact('like')}
-        disabled={disabled}
         className={cn(
           'h-7 px-2 gap-1 text-xs',
           userReaction === 'like'
@@ -48,15 +44,14 @@ export function CommentReactions({
           isAnimating === 'like' && 'scale-110'
         )}
       >
-        <ThumbsUp className={cn('h-3.5 w-3.5', isAnimating === 'like' && 'animate-bounce')} />
-        {likeCount > 0 && <span>{likeCount}</span>}
+        <ThumbsUp className={cn('h-3.5 w-3.5', userReaction === 'like' && 'fill-current', isAnimating === 'like' && 'animate-bounce')} />
+        <span>{likeCount}</span>
       </Button>
 
       <Button
         variant="ghost"
         size="sm"
         onClick={() => handleReact('dislike')}
-        disabled={disabled}
         className={cn(
           'h-7 px-2 gap-1 text-xs',
           userReaction === 'dislike'
@@ -65,15 +60,14 @@ export function CommentReactions({
           isAnimating === 'dislike' && 'scale-110'
         )}
       >
-        <ThumbsDown className={cn('h-3.5 w-3.5', isAnimating === 'dislike' && 'animate-bounce')} />
-        {dislikeCount > 0 && <span>{dislikeCount}</span>}
+        <ThumbsDown className={cn('h-3.5 w-3.5', userReaction === 'dislike' && 'fill-current', isAnimating === 'dislike' && 'animate-bounce')} />
+        <span>{dislikeCount}</span>
       </Button>
 
       <Button
         variant="ghost"
         size="sm"
         onClick={() => handleReact('love')}
-        disabled={disabled}
         className={cn(
           'h-7 px-2 gap-1 text-xs',
           userReaction === 'love'
@@ -83,7 +77,7 @@ export function CommentReactions({
         )}
       >
         <Heart className={cn('h-3.5 w-3.5', userReaction === 'love' && 'fill-current', isAnimating === 'love' && 'animate-bounce')} />
-        {loveCount > 0 && <span>{loveCount}</span>}
+        <span>{loveCount}</span>
       </Button>
     </div>
   );
