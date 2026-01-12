@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, User, Trash2, Shield, ExternalLink } from 'lucide-react';
+import { ArrowLeft, Bell, User, Trash2, Shield, ExternalLink, Smartphone, Download } from 'lucide-react';
+import { InstallAppGuide } from '@/components/InstallAppGuide';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -178,6 +179,35 @@ export default function Settings() {
                 </Button>
               </div>
             )}
+          </div>
+        </section>
+
+        {/* Install App Section */}
+        <section className="mb-8">
+          <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
+            <Download className="w-4 h-4" />
+            Install App
+          </h2>
+          <div className="glass-card rounded-xl p-4">
+            <div className="flex items-start gap-4">
+              <div className="flex-shrink-0 w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
+                <Smartphone className="w-6 h-6 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-foreground mb-1">Add to Home Screen</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Install this app on your phone for quick access and a native app experience.
+                </p>
+                <InstallAppGuide
+                  trigger={
+                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                      <Download className="w-4 h-4 mr-2" />
+                      See How to Install
+                    </Button>
+                  }
+                />
+              </div>
+            </div>
           </div>
         </section>
 
