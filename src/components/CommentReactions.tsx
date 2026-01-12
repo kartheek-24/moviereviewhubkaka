@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { ThumbsUp, ThumbsDown, Heart } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { AnimatedCounter } from './AnimatedCounter';
 import { cn } from '@/lib/utils';
 
 export type ReactionType = 'like' | 'dislike' | 'love';
@@ -44,8 +45,8 @@ export function CommentReactions({
           isAnimating === 'like' && 'scale-110'
         )}
       >
-        <ThumbsUp className={cn('h-3.5 w-3.5', userReaction === 'like' && 'fill-current', isAnimating === 'like' && 'animate-bounce')} />
-        <span>{likeCount}</span>
+        <ThumbsUp className={cn('h-3.5 w-3.5 transition-transform', userReaction === 'like' && 'fill-current', isAnimating === 'like' && 'animate-bounce')} />
+        <AnimatedCounter value={likeCount} />
       </Button>
 
       <Button
@@ -60,8 +61,8 @@ export function CommentReactions({
           isAnimating === 'dislike' && 'scale-110'
         )}
       >
-        <ThumbsDown className={cn('h-3.5 w-3.5', userReaction === 'dislike' && 'fill-current', isAnimating === 'dislike' && 'animate-bounce')} />
-        <span>{dislikeCount}</span>
+        <ThumbsDown className={cn('h-3.5 w-3.5 transition-transform', userReaction === 'dislike' && 'fill-current', isAnimating === 'dislike' && 'animate-bounce')} />
+        <AnimatedCounter value={dislikeCount} />
       </Button>
 
       <Button
@@ -76,8 +77,8 @@ export function CommentReactions({
           isAnimating === 'love' && 'scale-110'
         )}
       >
-        <Heart className={cn('h-3.5 w-3.5', userReaction === 'love' && 'fill-current', isAnimating === 'love' && 'animate-bounce')} />
-        <span>{loveCount}</span>
+        <Heart className={cn('h-3.5 w-3.5 transition-transform', userReaction === 'love' && 'fill-current', isAnimating === 'love' && 'animate-bounce')} />
+        <AnimatedCounter value={loveCount} />
       </Button>
     </div>
   );
