@@ -66,7 +66,7 @@ export function useUserReactions(
   });
 }
 
-// Hook to toggle comment reaction
+// Hook to toggle comment reaction with optimistic updates
 export function useToggleCommentReaction() {
   const queryClient = useQueryClient();
 
@@ -78,9 +78,77 @@ export function useToggleCommentReaction() {
       deviceId: string;
       reviewId: string;
     }) => toggleCommentReaction(commentId, reactionType, userId, deviceId),
-    onSuccess: (_, variables) => {
+    onMutate: async (variables) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['comments', variables.reviewId] });
+      await queryClient.cancelQueries({ queryKey: ['userReactions'], exact: false });
+
+      // Snapshot the previous values
+      const previousComments = queryClient.getQueryData<Comment[]>(['comments', variables.reviewId]);
+
+      // Get current user reaction for this comment from all userReactions queries
+      const allReactionsQueries = queryClient.getQueriesData<Array<{ comment_id: string; reaction_type: ReactionType }>>({ 
+        queryKey: ['userReactions'] 
+      });
+      let currentReaction: ReactionType | undefined;
+      for (const [, data] of allReactionsQueries) {
+        const found = data?.find(r => r.comment_id === variables.commentId);
+        if (found) {
+          currentReaction = found.reaction_type;
+          break;
+        }
+      }
+
+      // Optimistically update comments
+      if (previousComments) {
+        queryClient.setQueryData<Comment[]>(['comments', variables.reviewId], (old) => {
+          if (!old) return old;
+          return old.map(comment => {
+            if (comment.id !== variables.commentId) return comment;
+
+            let newLikeCount = comment.like_count;
+            let newDislikeCount = comment.dislike_count;
+            let newLoveCount = comment.love_count;
+
+            // If clicking the same reaction, remove it
+            if (currentReaction === variables.reactionType) {
+              if (variables.reactionType === 'like') newLikeCount = Math.max(0, newLikeCount - 1);
+              if (variables.reactionType === 'dislike') newDislikeCount = Math.max(0, newDislikeCount - 1);
+              if (variables.reactionType === 'love') newLoveCount = Math.max(0, newLoveCount - 1);
+            } else {
+              // Remove old reaction count if exists
+              if (currentReaction === 'like') newLikeCount = Math.max(0, newLikeCount - 1);
+              if (currentReaction === 'dislike') newDislikeCount = Math.max(0, newDislikeCount - 1);
+              if (currentReaction === 'love') newLoveCount = Math.max(0, newLoveCount - 1);
+
+              // Add new reaction count
+              if (variables.reactionType === 'like') newLikeCount += 1;
+              if (variables.reactionType === 'dislike') newDislikeCount += 1;
+              if (variables.reactionType === 'love') newLoveCount += 1;
+            }
+
+            return { 
+              ...comment, 
+              like_count: newLikeCount,
+              dislike_count: newDislikeCount,
+              love_count: newLoveCount,
+            };
+          });
+        });
+      }
+
+      return { previousComments };
+    },
+    onError: (err, variables, context) => {
+      // Rollback on error
+      if (context?.previousComments) {
+        queryClient.setQueryData(['comments', variables.reviewId], context.previousComments);
+      }
+    },
+    onSettled: (_, __, variables) => {
+      // Refetch to ensure consistency
       queryClient.invalidateQueries({ queryKey: ['comments', variables.reviewId] });
-      queryClient.invalidateQueries({ queryKey: ['userReactions'] });
+      queryClient.invalidateQueries({ queryKey: ['userReactions'], exact: false });
     },
   });
 }
