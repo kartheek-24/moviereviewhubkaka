@@ -7,6 +7,7 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { EmptyState } from './EmptyState';
 import { CommentReactions } from './CommentReactions';
+import { LinkifiedText } from './LinkifiedText';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -168,7 +169,7 @@ export function CommentSection({
             )}
           </div>
           <p className="text-sm text-foreground/90 whitespace-pre-wrap mb-2">
-            {comment.text}
+            <LinkifiedText text={comment.text} />
           </p>
           
           {/* Reactions and Reply button */}
