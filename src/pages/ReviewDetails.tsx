@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Share2 } from 'lucide-react';
-import { useReview, useComments, useCreateComment, useDeleteComment, useReportComment } from '@/hooks/useReviews';
+import { useReview, useComments, useCreateComment, useDeleteComment, useReportComment, useUserReactions, useToggleCommentReaction } from '@/hooks/useReviews';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { StarRating } from '@/components/StarRating';
@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { format } from 'date-fns';
+import { ReactionType } from '@/services/reviewService';
 
 export default function ReviewDetails() {
   const { id } = useParams<{ id: string }>();
@@ -28,6 +29,20 @@ export default function ReviewDetails() {
   const createComment = useCreateComment();
   const deleteCommentMutation = useDeleteComment();
   const reportCommentMutation = useReportComment();
+  const toggleReactionMutation = useToggleCommentReaction();
+
+  // Fetch user reactions for all comments
+  const commentIds = useMemo(() => comments.map(c => c.id), [comments]);
+  const { data: userReactionsData = [] } = useUserReactions(commentIds, user?.id || null, deviceId);
+  
+  // Convert reactions array to Map for easy lookup
+  const userReactions = useMemo(() => {
+    const map = new Map<string, ReactionType>();
+    userReactionsData.forEach(reaction => {
+      map.set(reaction.comment_id, reaction.reaction_type);
+    });
+    return map;
+  }, [userReactionsData]);
 
   const shareUrl = review ? `${window.location.origin}/review/${review.id}` : '';
 
@@ -36,7 +51,7 @@ export default function ReviewDetails() {
     setShareDialogOpen(true);
   };
 
-  const handleAddComment = (text: string, isAnonymous: boolean) => {
+  const handleAddComment = (text: string, isAnonymous: boolean, parentId?: string | null) => {
     if (!id) return;
 
     let displayName = 'Guest';
@@ -53,6 +68,7 @@ export default function ReviewDetails() {
       display_name: displayName,
       user_id: user?.id || null,
       device_id: deviceId,
+      parent_id: parentId || null,
     });
   };
 
@@ -63,6 +79,17 @@ export default function ReviewDetails() {
 
   const handleReportComment = (commentId: string, reason?: string) => {
     reportCommentMutation.mutate({ commentId, reason });
+  };
+
+  const handleReactToComment = (commentId: string, reactionType: ReactionType) => {
+    if (!id || !deviceId) return;
+    toggleReactionMutation.mutate({
+      commentId,
+      reactionType,
+      userId: user?.id || null,
+      deviceId,
+      reviewId: id,
+    });
   };
 
   const isLoading = reviewLoading;
@@ -193,7 +220,6 @@ export default function ReviewDetails() {
 
               <Separator className="my-6 bg-border/50" />
 
-              {/* Comments */}
               <CommentSection
                 reviewId={review.id}
                 comments={comments}
@@ -201,9 +227,11 @@ export default function ReviewDetails() {
                 onAddComment={handleAddComment}
                 onDeleteComment={handleDeleteComment}
                 onReportComment={handleReportComment}
+                onReactToComment={handleReactToComment}
                 currentUserId={user?.id || null}
                 isAdmin={isAdmin}
                 isLoggedIn={!!user}
+                userReactions={userReactions}
               />
             </article>
           )}
