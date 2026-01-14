@@ -13,12 +13,6 @@ export function FloatingInstallButton() {
   const isMobile = useIsMobile();
 
   useEffect(() => {
-    // Only show on mobile
-    if (!isMobile) {
-      setIsVisible(false);
-      return;
-    }
-
     // Check if running as installed PWA
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
       || (window.navigator as any).standalone === true;
@@ -47,7 +41,7 @@ export function FloatingInstallButton() {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, [isMobile]);
+  }, []);
 
   const handleDismiss = (e: React.MouseEvent) => {
     e.stopPropagation();
