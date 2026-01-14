@@ -84,7 +84,7 @@ export default function Settings() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/')}
               className="text-foreground hover:bg-muted mr-3"
             >
               <ArrowLeft className="h-5 w-5" />
