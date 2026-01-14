@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
+import { FloatingInstallButton } from "@/components/FloatingInstallButton";
 import Index from "./pages/Index";
 import ReviewDetails from "./pages/ReviewDetails";
 import Settings from "./pages/Settings";
@@ -25,6 +26,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <PushNotificationPrompt />
+          <FloatingInstallButton />
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
