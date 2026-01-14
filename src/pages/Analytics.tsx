@@ -204,7 +204,7 @@ export default function Analytics() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/')}
               className="text-foreground hover:bg-muted"
             >
               <ArrowLeft className="h-5 w-5" />
