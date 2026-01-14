@@ -1,10 +1,11 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3 } from 'lucide-react';
+import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3, Eye, MousePointerClick, Clock, ArrowUpRight, Globe, Smartphone, Monitor, MapPin } from 'lucide-react';
 import { useReviews, useLanguages } from '@/hooks/useReviews';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   BarChart,
   Bar,
@@ -20,6 +21,9 @@ import {
   Line,
   AreaChart,
   Area,
+  RadialBarChart,
+  RadialBar,
+  Legend,
 } from 'recharts';
 import { format, subDays, startOfDay, parseISO } from 'date-fns';
 
@@ -33,10 +37,47 @@ const CHART_COLORS = [
   'hsl(180, 50%, 45%)',  // Cyan
 ];
 
+// Mock visitor analytics data (in a real app, this would come from an analytics service)
+const visitorAnalytics = {
+  totalVisitors: 444,
+  totalPageviews: 1273,
+  avgPageviewsPerVisit: 2.87,
+  avgSessionDuration: 100, // seconds
+  bounceRate: 52,
+  visitorsTimeline: [
+    { date: 'Jan 11', visitors: 10, pageviews: 26 },
+    { date: 'Jan 12', visitors: 96, pageviews: 363 },
+    { date: 'Jan 13', visitors: 256, pageviews: 688 },
+    { date: 'Jan 14', visitors: 82, pageviews: 196 },
+  ],
+  topPages: [
+    { page: 'Home', views: 246 },
+    { page: 'Adipurush Review', views: 230 },
+    { page: 'Pushpa 2 Review', views: 139 },
+    { page: 'Salaar Review', views: 55 },
+    { page: 'Animal Review', views: 34 },
+  ],
+  trafficSources: [
+    { source: 'Direct', visitors: 442 },
+    { source: 'Google', visitors: 2 },
+  ],
+  deviceTypes: [
+    { device: 'Mobile', visitors: 434, fill: 'hsl(38, 92%, 50%)' },
+    { device: 'Desktop', visitors: 10, fill: 'hsl(220, 70%, 50%)' },
+  ],
+  countries: [
+    { country: 'United States', visitors: 373, code: 'US' },
+    { country: 'India', visitors: 63, code: 'IN' },
+    { country: 'Canada', visitors: 7, code: 'CA' },
+    { country: 'Sweden', visitors: 1, code: 'SE' },
+  ],
+};
+
 export default function Analytics() {
   const navigate = useNavigate();
   const { data: reviews = [], isLoading } = useReviews();
   const { data: languages = [] } = useLanguages();
+  const [activeTab, setActiveTab] = useState('visitors');
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -116,6 +157,21 @@ export default function Analytics() {
       }));
   }, [reviews]);
 
+  // Engagement rate calculation
+  const engagementRate = useMemo(() => {
+    const totalInteractions = stats.totalComments + stats.totalHelpful;
+    const rate = visitorAnalytics.totalVisitors > 0 
+      ? ((totalInteractions / visitorAnalytics.totalVisitors) * 100).toFixed(1)
+      : '0';
+    return rate;
+  }, [stats]);
+
+  // Radial data for engagement overview
+  const engagementRadialData = [
+    { name: 'Bounce Rate', value: visitorAnalytics.bounceRate, fill: 'hsl(340, 65%, 50%)' },
+    { name: 'Engagement', value: 100 - visitorAnalytics.bounceRate, fill: 'hsl(160, 60%, 45%)' },
+  ];
+
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -130,6 +186,13 @@ export default function Analytics() {
       );
     }
     return null;
+  };
+
+  const formatDuration = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`;
+    const minutes = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${minutes}m ${secs}s`;
   };
 
   return (
@@ -168,271 +231,605 @@ export default function Analytics() {
             </div>
           ) : (
             <div className="space-y-6 animate-fade-in">
-              {/* Stats Cards */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <Card className="bg-card/50 border-border/50">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-                        <Film className="w-5 h-5 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-foreground">{stats.totalReviews}</p>
-                        <p className="text-xs text-muted-foreground">Total Reviews</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+              {/* Tab Navigation */}
+              <Tabs defaultValue="visitors" className="w-full" onValueChange={setActiveTab}>
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="visitors" className="flex items-center gap-2">
+                    <Users className="w-4 h-4" />
+                    Visitors
+                  </TabsTrigger>
+                  <TabsTrigger value="content" className="flex items-center gap-2">
+                    <Film className="w-4 h-4" />
+                    Content
+                  </TabsTrigger>
+                </TabsList>
 
-                <Card className="bg-card/50 border-border/50">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
-                        <MessageSquare className="w-5 h-5 text-blue-500" />
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-foreground">{stats.totalComments}</p>
-                        <p className="text-xs text-muted-foreground">Comments</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                {/* Visitors Tab */}
+                <TabsContent value="visitors" className="space-y-6">
+                  {/* Visitor Stats Cards */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Card className="bg-gradient-to-br from-primary/20 to-primary/5 border-primary/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-primary/30 flex items-center justify-center">
+                            <Users className="w-6 h-6 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-3xl font-bold text-foreground">{visitorAnalytics.totalVisitors}</p>
+                            <p className="text-xs text-muted-foreground">Total Visitors</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                <Card className="bg-card/50 border-border/50">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
-                        <ThumbsUp className="w-5 h-5 text-green-500" />
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-foreground">{stats.totalHelpful}</p>
-                        <p className="text-xs text-muted-foreground">Helpful Votes</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                    <Card className="bg-gradient-to-br from-blue-500/20 to-blue-500/5 border-blue-500/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-blue-500/30 flex items-center justify-center">
+                            <Eye className="w-6 h-6 text-blue-500" />
+                          </div>
+                          <div>
+                            <p className="text-3xl font-bold text-foreground">{visitorAnalytics.totalPageviews}</p>
+                            <p className="text-xs text-muted-foreground">Page Views</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-                <Card className="bg-card/50 border-border/50">
-                  <CardContent className="p-4">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
-                        <TrendingUp className="w-5 h-5 text-amber-500" />
-                      </div>
-                      <div>
-                        <p className="text-2xl font-bold text-foreground">{stats.avgRating}</p>
-                        <p className="text-xs text-muted-foreground">Avg Rating</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
+                    <Card className="bg-gradient-to-br from-green-500/20 to-green-500/5 border-green-500/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-green-500/30 flex items-center justify-center">
+                            <Clock className="w-6 h-6 text-green-500" />
+                          </div>
+                          <div>
+                            <p className="text-3xl font-bold text-foreground">{formatDuration(visitorAnalytics.avgSessionDuration)}</p>
+                            <p className="text-xs text-muted-foreground">Avg Session</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
 
-              {/* Activity Timeline */}
-              <Card className="bg-card/50 border-border/50">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <TrendingUp className="w-5 h-5 text-primary" />
-                    Activity (Last 30 Days)
-                  </CardTitle>
-                  <CardDescription>Reviews and comments over time</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={timelineData}>
-                        <defs>
-                          <linearGradient id="colorReviews" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0}/>
-                          </linearGradient>
-                          <linearGradient id="colorComments" x1="0" y1="0" x2="0" y2="1">
-                            <stop offset="5%" stopColor="hsl(220, 70%, 50%)" stopOpacity={0.3}/>
-                            <stop offset="95%" stopColor="hsl(220, 70%, 50%)" stopOpacity={0}/>
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" />
-                        <XAxis 
-                          dataKey="date" 
-                          tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
-                          tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
-                          interval="preserveStartEnd"
-                        />
-                        <YAxis 
-                          tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
-                          tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Area 
-                          type="monotone" 
-                          dataKey="reviews" 
-                          stroke="hsl(38, 92%, 50%)" 
-                          fillOpacity={1} 
-                          fill="url(#colorReviews)" 
-                          name="Reviews"
-                        />
-                        <Area 
-                          type="monotone" 
-                          dataKey="comments" 
-                          stroke="hsl(220, 70%, 50%)" 
-                          fillOpacity={1} 
-                          fill="url(#colorComments)" 
-                          name="Comments"
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
+                    <Card className="bg-gradient-to-br from-purple-500/20 to-purple-500/5 border-purple-500/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-purple-500/30 flex items-center justify-center">
+                            <MousePointerClick className="w-6 h-6 text-purple-500" />
+                          </div>
+                          <div>
+                            <p className="text-3xl font-bold text-foreground">{visitorAnalytics.avgPageviewsPerVisit}</p>
+                            <p className="text-xs text-muted-foreground">Pages/Visit</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Two Column Layout */}
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* Reviews by Language */}
-                <Card className="bg-card/50 border-border/50">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Reviews by Language</CardTitle>
-                    <CardDescription>Distribution across languages</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={languageData}
-                            cx="50%"
-                            cy="50%"
-                            innerRadius={50}
-                            outerRadius={80}
-                            paddingAngle={2}
-                            dataKey="value"
-                            label={({ name, percent }) => 
-                              `${name} ${(percent * 100).toFixed(0)}%`
-                            }
-                            labelLine={{ stroke: 'hsl(220, 10%, 55%)' }}
-                          >
-                            {languageData.map((_, index) => (
-                              <Cell 
-                                key={`cell-${index}`} 
-                                fill={CHART_COLORS[index % CHART_COLORS.length]} 
+                  {/* Visitors Timeline Chart */}
+                  <Card className="bg-card/50 border-border/50">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-primary" />
+                        Visitor Traffic
+                      </CardTitle>
+                      <CardDescription>Visitors and pageviews over time</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-72">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={visitorAnalytics.visitorsTimeline}>
+                            <defs>
+                              <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0.4}/>
+                                <stop offset="95%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0}/>
+                              </linearGradient>
+                              <linearGradient id="colorPageviews" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(220, 70%, 50%)" stopOpacity={0.4}/>
+                                <stop offset="95%" stopColor="hsl(220, 70%, 50%)" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" />
+                            <XAxis 
+                              dataKey="date" 
+                              tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 12 }}
+                              tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
+                            />
+                            <YAxis 
+                              tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 12 }}
+                              tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
+                            />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Area 
+                              type="monotone" 
+                              dataKey="visitors" 
+                              stroke="hsl(38, 92%, 50%)" 
+                              strokeWidth={2}
+                              fillOpacity={1} 
+                              fill="url(#colorVisitors)" 
+                              name="Visitors"
+                            />
+                            <Area 
+                              type="monotone" 
+                              dataKey="pageviews" 
+                              stroke="hsl(220, 70%, 50%)" 
+                              strokeWidth={2}
+                              fillOpacity={1} 
+                              fill="url(#colorPageviews)" 
+                              name="Pageviews"
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Three Column Layout */}
+                  <div className="grid md:grid-cols-3 gap-6">
+                    {/* Device Distribution */}
+                    <Card className="bg-card/50 border-border/50">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Smartphone className="w-5 h-5 text-primary" />
+                          Devices
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-48">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={visitorAnalytics.deviceTypes}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={40}
+                                outerRadius={70}
+                                paddingAngle={4}
+                                dataKey="visitors"
+                              >
+                                {visitorAnalytics.deviceTypes.map((entry, index) => (
+                                  <Cell key={`cell-${index}`} fill={entry.fill} />
+                                ))}
+                              </Pie>
+                              <Tooltip content={<CustomTooltip />} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                        <div className="flex justify-center gap-6 mt-2">
+                          {visitorAnalytics.deviceTypes.map((device, i) => (
+                            <div key={i} className="flex items-center gap-2">
+                              {device.device === 'Mobile' ? 
+                                <Smartphone className="w-4 h-4" style={{ color: device.fill }} /> :
+                                <Monitor className="w-4 h-4" style={{ color: device.fill }} />
+                              }
+                              <span className="text-sm text-muted-foreground">{device.device}</span>
+                              <span className="text-sm font-medium">{device.visitors}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Traffic Sources */}
+                    <Card className="bg-card/50 border-border/50">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Globe className="w-5 h-5 text-primary" />
+                          Traffic Sources
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {visitorAnalytics.trafficSources.map((source, i) => (
+                            <div key={i}>
+                              <div className="flex justify-between mb-1">
+                                <span className="text-sm text-foreground">{source.source}</span>
+                                <span className="text-sm font-medium text-foreground">{source.visitors}</span>
+                              </div>
+                              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                <div 
+                                  className="h-full rounded-full transition-all duration-500"
+                                  style={{ 
+                                    width: `${(source.visitors / visitorAnalytics.totalVisitors) * 100}%`,
+                                    backgroundColor: CHART_COLORS[i % CHART_COLORS.length]
+                                  }}
+                                />
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Engagement Rate */}
+                    <Card className="bg-card/50 border-border/50">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <MousePointerClick className="w-5 h-5 text-primary" />
+                          Engagement
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="text-center">
+                          <div className="relative inline-flex items-center justify-center">
+                            <svg className="w-32 h-32">
+                              <circle
+                                className="text-muted"
+                                strokeWidth="8"
+                                stroke="currentColor"
+                                fill="transparent"
+                                r="52"
+                                cx="64"
+                                cy="64"
                               />
-                            ))}
-                          </Pie>
-                          <Tooltip content={<CustomTooltip />} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Rating Distribution */}
-                <Card className="bg-card/50 border-border/50">
-                  <CardHeader>
-                    <CardTitle className="text-lg">Rating Distribution</CardTitle>
-                    <CardDescription>How reviews are rated</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-64">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={ratingData} layout="vertical">
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" />
-                          <XAxis 
-                            type="number"
-                            tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
-                            tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
-                          />
-                          <YAxis 
-                            type="category"
-                            dataKey="rating"
-                            tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
-                            tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
-                            width={60}
-                          />
-                          <Tooltip content={<CustomTooltip />} />
-                          <Bar 
-                            dataKey="count" 
-                            fill="hsl(38, 92%, 50%)" 
-                            radius={[0, 4, 4, 0]}
-                            name="Reviews"
-                          />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {/* Top Engaging Reviews */}
-              <Card className="bg-card/50 border-border/50">
-                <CardHeader>
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Users className="w-5 h-5 text-primary" />
-                    Most Engaging Reviews
-                  </CardTitle>
-                  <CardDescription>Reviews with highest interaction</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="h-64">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={topReviews}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" />
-                        <XAxis 
-                          dataKey="title"
-                          tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 10 }}
-                          tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
-                          interval={0}
-                          angle={-15}
-                          textAnchor="end"
-                          height={60}
-                        />
-                        <YAxis 
-                          tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
-                          tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
-                        />
-                        <Tooltip content={<CustomTooltip />} />
-                        <Bar 
-                          dataKey="helpful" 
-                          stackId="a" 
-                          fill="hsl(160, 60%, 45%)" 
-                          name="Helpful Votes"
-                          radius={[0, 0, 0, 0]}
-                        />
-                        <Bar 
-                          dataKey="comments" 
-                          stackId="a" 
-                          fill="hsl(220, 70%, 50%)" 
-                          name="Comments"
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
+                              <circle
+                                className="text-primary"
+                                strokeWidth="8"
+                                strokeDasharray={`${(100 - visitorAnalytics.bounceRate) * 3.27} 327`}
+                                strokeLinecap="round"
+                                stroke="currentColor"
+                                fill="transparent"
+                                r="52"
+                                cx="64"
+                                cy="64"
+                                style={{ transform: 'rotate(-90deg)', transformOrigin: '64px 64px' }}
+                              />
+                            </svg>
+                            <span className="absolute text-2xl font-bold">{100 - visitorAnalytics.bounceRate}%</span>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-2">Engaged Visitors</p>
+                          <p className="text-xs text-muted-foreground">(Bounce rate: {visitorAnalytics.bounceRate}%)</p>
+                        </div>
+                      </CardContent>
+                    </Card>
                   </div>
-                </CardContent>
-              </Card>
 
-              {/* Quick Stats Footer */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                <div className="p-4 rounded-lg bg-muted/30">
-                  <p className="text-2xl font-bold text-primary">{languages.length}</p>
-                  <p className="text-xs text-muted-foreground">Languages</p>
-                </div>
-                <div className="p-4 rounded-lg bg-muted/30">
-                  <p className="text-2xl font-bold text-primary">
-                    {reviews.filter(r => r.rating >= 4).length}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Highly Rated (4+)</p>
-                </div>
-                <div className="p-4 rounded-lg bg-muted/30">
-                  <p className="text-2xl font-bold text-primary">
-                    {reviews.filter(r => r.comment_count > 0).length}
-                  </p>
-                  <p className="text-xs text-muted-foreground">With Comments</p>
-                </div>
-                <div className="p-4 rounded-lg bg-muted/30">
-                  <p className="text-2xl font-bold text-primary">
-                    {reviews.filter(r => r.tags && r.tags.length > 0).length}
-                  </p>
-                  <p className="text-xs text-muted-foreground">Tagged Reviews</p>
-                </div>
-              </div>
+                  {/* Top Pages and Countries */}
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Top Pages */}
+                    <Card className="bg-card/50 border-border/50">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Eye className="w-5 h-5 text-primary" />
+                          Top Pages
+                        </CardTitle>
+                        <CardDescription>Most visited pages</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-64">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={visitorAnalytics.topPages} layout="vertical">
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" />
+                              <XAxis 
+                                type="number"
+                                tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
+                                tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
+                              />
+                              <YAxis 
+                                type="category"
+                                dataKey="page"
+                                tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
+                                tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
+                                width={100}
+                              />
+                              <Tooltip content={<CustomTooltip />} />
+                              <Bar 
+                                dataKey="views" 
+                                fill="hsl(38, 92%, 50%)" 
+                                radius={[0, 4, 4, 0]}
+                                name="Views"
+                              />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Countries */}
+                    <Card className="bg-card/50 border-border/50">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <MapPin className="w-5 h-5 text-primary" />
+                          Visitor Locations
+                        </CardTitle>
+                        <CardDescription>Where your visitors are from</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {visitorAnalytics.countries.map((country, i) => (
+                            <div key={i} className="flex items-center gap-4">
+                              <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center font-bold text-sm">
+                                {country.code}
+                              </div>
+                              <div className="flex-1">
+                                <div className="flex justify-between mb-1">
+                                  <span className="text-sm text-foreground">{country.country}</span>
+                                  <span className="text-sm font-medium text-foreground">{country.visitors}</span>
+                                </div>
+                                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                  <div 
+                                    className="h-full rounded-full transition-all duration-500"
+                                    style={{ 
+                                      width: `${(country.visitors / visitorAnalytics.totalVisitors) * 100}%`,
+                                      backgroundColor: CHART_COLORS[i % CHART_COLORS.length]
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                </TabsContent>
+
+                {/* Content Tab */}
+                <TabsContent value="content" className="space-y-6">
+                  {/* Content Stats Cards */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <Card className="bg-card/50 border-border/50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
+                            <Film className="w-5 h-5 text-primary" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-foreground">{stats.totalReviews}</p>
+                            <p className="text-xs text-muted-foreground">Total Reviews</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-card/50 border-border/50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                            <MessageSquare className="w-5 h-5 text-blue-500" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-foreground">{stats.totalComments}</p>
+                            <p className="text-xs text-muted-foreground">Comments</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-card/50 border-border/50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-green-500/20 flex items-center justify-center">
+                            <ThumbsUp className="w-5 h-5 text-green-500" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-foreground">{stats.totalHelpful}</p>
+                            <p className="text-xs text-muted-foreground">Helpful Votes</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-card/50 border-border/50">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center">
+                            <TrendingUp className="w-5 h-5 text-amber-500" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold text-foreground">{stats.avgRating}</p>
+                            <p className="text-xs text-muted-foreground">Avg Rating</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Activity Timeline */}
+                  <Card className="bg-card/50 border-border/50">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <TrendingUp className="w-5 h-5 text-primary" />
+                        Activity (Last 30 Days)
+                      </CardTitle>
+                      <CardDescription>Reviews and comments over time</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <AreaChart data={timelineData}>
+                            <defs>
+                              <linearGradient id="colorReviews" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0}/>
+                              </linearGradient>
+                              <linearGradient id="colorComments" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="5%" stopColor="hsl(220, 70%, 50%)" stopOpacity={0.3}/>
+                                <stop offset="95%" stopColor="hsl(220, 70%, 50%)" stopOpacity={0}/>
+                              </linearGradient>
+                            </defs>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" />
+                            <XAxis 
+                              dataKey="date" 
+                              tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
+                              tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
+                              interval="preserveStartEnd"
+                            />
+                            <YAxis 
+                              tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
+                              tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
+                            />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Area 
+                              type="monotone" 
+                              dataKey="reviews" 
+                              stroke="hsl(38, 92%, 50%)" 
+                              fillOpacity={1} 
+                              fill="url(#colorReviews)" 
+                              name="Reviews"
+                            />
+                            <Area 
+                              type="monotone" 
+                              dataKey="comments" 
+                              stroke="hsl(220, 70%, 50%)" 
+                              fillOpacity={1} 
+                              fill="url(#colorComments)" 
+                              name="Comments"
+                            />
+                          </AreaChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Two Column Layout */}
+                  <div className="grid md:grid-cols-2 gap-6">
+                    {/* Reviews by Language */}
+                    <Card className="bg-card/50 border-border/50">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Reviews by Language</CardTitle>
+                        <CardDescription>Distribution across languages</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-64">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <PieChart>
+                              <Pie
+                                data={languageData}
+                                cx="50%"
+                                cy="50%"
+                                innerRadius={50}
+                                outerRadius={80}
+                                paddingAngle={2}
+                                dataKey="value"
+                                label={({ name, percent }) => 
+                                  `${name} ${(percent * 100).toFixed(0)}%`
+                                }
+                                labelLine={{ stroke: 'hsl(220, 10%, 55%)' }}
+                              >
+                                {languageData.map((_, index) => (
+                                  <Cell 
+                                    key={`cell-${index}`} 
+                                    fill={CHART_COLORS[index % CHART_COLORS.length]} 
+                                  />
+                                ))}
+                              </Pie>
+                              <Tooltip content={<CustomTooltip />} />
+                            </PieChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Rating Distribution */}
+                    <Card className="bg-card/50 border-border/50">
+                      <CardHeader>
+                        <CardTitle className="text-lg">Rating Distribution</CardTitle>
+                        <CardDescription>How reviews are rated</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-64">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={ratingData} layout="vertical">
+                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" />
+                              <XAxis 
+                                type="number"
+                                tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
+                                tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
+                              />
+                              <YAxis 
+                                type="category"
+                                dataKey="rating"
+                                tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
+                                tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
+                                width={60}
+                              />
+                              <Tooltip content={<CustomTooltip />} />
+                              <Bar 
+                                dataKey="count" 
+                                fill="hsl(38, 92%, 50%)" 
+                                radius={[0, 4, 4, 0]}
+                                name="Reviews"
+                              />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Top Engaging Reviews */}
+                  <Card className="bg-card/50 border-border/50">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Users className="w-5 h-5 text-primary" />
+                        Most Engaging Reviews
+                      </CardTitle>
+                      <CardDescription>Reviews with highest interaction</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={topReviews}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" />
+                            <XAxis 
+                              dataKey="title"
+                              tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 10 }}
+                              tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
+                              interval={0}
+                              angle={-15}
+                              textAnchor="end"
+                              height={60}
+                            />
+                            <YAxis 
+                              tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
+                              tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
+                            />
+                            <Tooltip content={<CustomTooltip />} />
+                            <Bar 
+                              dataKey="helpful" 
+                              stackId="a" 
+                              fill="hsl(160, 60%, 45%)" 
+                              name="Helpful Votes"
+                              radius={[0, 0, 0, 0]}
+                            />
+                            <Bar 
+                              dataKey="comments" 
+                              stackId="a" 
+                              fill="hsl(220, 70%, 50%)" 
+                              name="Comments"
+                              radius={[4, 4, 0, 0]}
+                            />
+                          </BarChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Quick Stats Footer */}
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                    <div className="p-4 rounded-lg bg-muted/30">
+                      <p className="text-2xl font-bold text-primary">{languages.length}</p>
+                      <p className="text-xs text-muted-foreground">Languages</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/30">
+                      <p className="text-2xl font-bold text-primary">
+                        {reviews.filter(r => r.rating >= 4).length}
+                      </p>
+                      <p className="text-xs text-muted-foreground">Highly Rated (4+)</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/30">
+                      <p className="text-2xl font-bold text-primary">
+                        {reviews.filter(r => r.comment_count > 0).length}
+                      </p>
+                      <p className="text-xs text-muted-foreground">With Comments</p>
+                    </div>
+                    <div className="p-4 rounded-lg bg-muted/30">
+                      <p className="text-2xl font-bold text-primary">{engagementRate}%</p>
+                      <p className="text-xs text-muted-foreground">Engagement Rate</p>
+                    </div>
+                  </div>
+                </TabsContent>
+              </Tabs>
             </div>
           )}
         </main>
