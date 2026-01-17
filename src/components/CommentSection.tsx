@@ -1,11 +1,12 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { Send, Flag, Trash2, User, Reply, ChevronDown, ChevronUp } from 'lucide-react';
+import { Send, Flag, Trash2, User, Reply, ChevronDown, ChevronUp, Info } from 'lucide-react';
 import { Comment, ReactionType } from '@/services/reviewService';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { EmptyState } from './EmptyState';
 import { CommentReactions } from './CommentReactions';
 import { LinkifiedText } from './LinkifiedText';
@@ -265,6 +266,17 @@ export function CommentSection({
           
           {showNameInput && (
             <div className="mb-2">
+              <div className="flex items-center gap-1 mb-1">
+                <Label className="text-xs text-muted-foreground">Display Name</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-[200px]">
+                    <p className="text-xs">Your name will be saved for future visits so you don't have to enter it again.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <div className="flex gap-2">
                 <Input
                   placeholder="Your name (optional)"
@@ -361,6 +373,17 @@ export function CommentSection({
                   <div className="ml-6 glass-card rounded-lg p-3 border-l-2 border-primary/20 animate-fade-in">
                     {showNameInput && (
                       <div className="mb-2">
+                        <div className="flex items-center gap-1 mb-1">
+                          <Label className="text-xs text-muted-foreground">Display Name</Label>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <Info className="h-3 w-3 text-muted-foreground cursor-help" />
+                            </TooltipTrigger>
+                            <TooltipContent side="top" className="max-w-[200px]">
+                              <p className="text-xs">Your name will be saved for future visits so you don't have to enter it again.</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </div>
                         <div className="flex gap-2">
                           <Input
                             placeholder="Your name (optional)"
