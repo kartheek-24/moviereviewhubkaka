@@ -227,8 +227,8 @@ export default function Settings() {
                 <span className="text-foreground">Clear Cache</span>
               </div>
             </button>
-            <a
-              href="#"
+            <button
+              onClick={() => navigate('/privacy-policy')}
               className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors"
             >
               <div className="flex items-center gap-3">
@@ -236,7 +236,7 @@ export default function Settings() {
                 <span className="text-foreground">Privacy Policy</span>
               </div>
               <ExternalLink className="w-4 h-4 text-muted-foreground" />
-            </a>
+            </button>
           </div>
         </section>
 
