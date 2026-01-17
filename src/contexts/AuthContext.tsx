@@ -30,9 +30,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log('Auth state changed:', event);
         setSession(session);
         setUser(session?.user ?? null);
         setIsLoading(false);
+
+        // Handle token refresh events
+        if (event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed successfully');
+        }
 
         // Defer profile fetch
         if (session?.user) {
@@ -56,7 +62,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
+    // Set up periodic session check every 4 minutes to proactively refresh
+    const refreshInterval = setInterval(async () => {
+      const { data: { session: currentSession } } = await supabase.auth.getSession();
+      
+      if (currentSession) {
+        // Check if token expires within 5 minutes
+        const expiresAt = currentSession.expires_at;
+        const now = Math.floor(Date.now() / 1000);
+        const timeUntilExpiry = expiresAt ? expiresAt - now : 0;
+        
+        if (timeUntilExpiry < 300) { // Less than 5 minutes
+          console.log('Token expiring soon, refreshing...');
+          const { data, error } = await supabase.auth.refreshSession();
+          if (error) {
+            console.error('Failed to refresh session:', error);
+            // If refresh fails, sign out to clear stale session
+            await supabase.auth.signOut();
+          } else if (data.session) {
+            setSession(data.session);
+            setUser(data.session.user);
+          }
+        }
+      }
+    }, 4 * 60 * 1000); // Check every 4 minutes
+
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(refreshInterval);
+    };
   }, []);
 
   const fetchProfile = async (userId: string) => {
