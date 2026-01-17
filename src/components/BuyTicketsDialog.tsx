@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Ticket, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
+import { Ticket, ExternalLink, ArrowUp, ArrowDown, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -78,6 +78,14 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
   const [error, setError] = useState('');
   const [sortAscending, setSortAscending] = useState(true);
 
+  const hasSavedZipCode = Boolean(localStorage.getItem(ZIPCODE_STORAGE_KEY));
+
+  const handleClearZipCode = () => {
+    localStorage.removeItem(ZIPCODE_STORAGE_KEY);
+    setZipCode('');
+    setShowTheaters(false);
+  };
+
   const sortedTheaters = useMemo(() => {
     return [...theaters].sort((a, b) => 
       sortAscending ? a.avgPrice - b.avgPrice : b.avgPrice - a.avgPrice
@@ -134,7 +142,21 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
         {!showTheaters ? (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="zipcode">Zip Code</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="zipcode">Zip Code</Label>
+                {hasSavedZipCode && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearZipCode}
+                    className="h-auto py-0.5 px-2 text-xs text-muted-foreground hover:text-destructive"
+                  >
+                    <X className="h-3 w-3 mr-1" />
+                    Clear saved
+                  </Button>
+                )}
+              </div>
               <Input
                 id="zipcode"
                 type="text"
