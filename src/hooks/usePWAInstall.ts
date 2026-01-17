@@ -1,7 +1,78 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
+
+// Store the deferred prompt globally so it persists across component re-renders
+let deferredPrompt: BeforeInstallPromptEvent | null = null;
+
+interface BeforeInstallPromptEvent extends Event {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
+
+export function usePWAInstallPrompt() {
+  const [canInstall, setCanInstall] = useState(false);
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    // Check if already installed
+    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
+      || (window.navigator as any).standalone === true;
+    
+    if (isStandalone) {
+      setIsInstalled(true);
+      return;
+    }
+
+    // Check if we already have a deferred prompt
+    if (deferredPrompt) {
+      setCanInstall(true);
+    }
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      // Prevent the mini-infobar from appearing on mobile
+      e.preventDefault();
+      // Store the event so it can be triggered later
+      deferredPrompt = e as BeforeInstallPromptEvent;
+      setCanInstall(true);
+    };
+
+    const handleAppInstalled = () => {
+      deferredPrompt = null;
+      setCanInstall(false);
+      setIsInstalled(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const promptInstall = useCallback(async (): Promise<boolean> => {
+    if (!deferredPrompt) {
+      return false;
+    }
+
+    // Show the install prompt
+    await deferredPrompt.prompt();
+
+    // Wait for the user's response
+    const { outcome } = await deferredPrompt.userChoice;
+
+    // Clear the deferred prompt - it can only be used once
+    deferredPrompt = null;
+    setCanInstall(false);
+
+    return outcome === 'accepted';
+  }, []);
+
+  return { canInstall, isInstalled, promptInstall };
+}
 
 export function usePWAInstallTracker() {
   const { deviceId } = useApp();

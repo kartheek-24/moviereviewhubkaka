@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InstallAppGuide } from './InstallAppGuide';
-import { useIsMobile } from '@/hooks/use-mobile';
+import { usePWAInstallPrompt } from '@/hooks/usePWAInstall';
+import { useToast } from '@/hooks/use-toast';
 
 const STORAGE_KEY = 'pwa_install_dismissed';
 const DISMISS_DURATION_DAYS = 7;
@@ -10,14 +11,13 @@ const DISMISS_DURATION_DAYS = 7;
 export function FloatingInstallButton() {
   const [isVisible, setIsVisible] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
-  const isMobile = useIsMobile();
+  const [isInstalling, setIsInstalling] = useState(false);
+  const { canInstall, isInstalled, promptInstall } = usePWAInstallPrompt();
+  const { toast } = useToast();
 
   useEffect(() => {
-    // Check if running as installed PWA
-    const isStandalone = window.matchMedia('(display-mode: standalone)').matches 
-      || (window.navigator as any).standalone === true;
-    
-    if (isStandalone) {
+    // Hide if already installed
+    if (isInstalled) {
       setIsVisible(false);
       return;
     }
@@ -41,7 +41,7 @@ export function FloatingInstallButton() {
     }, 2000);
 
     return () => clearTimeout(timer);
-  }, []);
+  }, [isInstalled]);
 
   const handleDismiss = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -49,8 +49,35 @@ export function FloatingInstallButton() {
     setIsVisible(false);
   };
 
-  const handleClick = () => {
-    setGuideOpen(true);
+  const handleClick = async () => {
+    // If native install prompt is available, use it
+    if (canInstall) {
+      setIsInstalling(true);
+      try {
+        const accepted = await promptInstall();
+        if (accepted) {
+          toast({
+            title: 'Installing...',
+            description: 'The app is being installed on your device.',
+          });
+          setIsVisible(false);
+        } else {
+          toast({
+            title: 'Installation cancelled',
+            description: 'You can install the app anytime from the menu.',
+          });
+        }
+      } catch (error) {
+        console.error('Install error:', error);
+        // Fallback to guide if something goes wrong
+        setGuideOpen(true);
+      } finally {
+        setIsInstalling(false);
+      }
+    } else {
+      // Fallback: Show manual installation guide (for iOS Safari, etc.)
+      setGuideOpen(true);
+    }
   };
 
   if (!isVisible) return null;
@@ -71,12 +98,15 @@ export function FloatingInstallButton() {
           {/* Main button */}
           <Button
             onClick={handleClick}
+            disabled={isInstalling}
             className="flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-300 bg-primary hover:bg-primary/90 text-primary-foreground pr-4 pl-3 py-5 rounded-full"
           >
             <div className="w-8 h-8 bg-primary-foreground/20 rounded-full flex items-center justify-center">
-              <Download className="w-4 h-4 animate-bounce" />
+              <Download className={`w-4 h-4 ${isInstalling ? 'animate-pulse' : 'animate-bounce'}`} />
             </div>
-            <span className="font-medium text-sm">Install App</span>
+            <span className="font-medium text-sm">
+              {isInstalling ? 'Installing...' : 'Install App'}
+            </span>
           </Button>
         </div>
       </div>
