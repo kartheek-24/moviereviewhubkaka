@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Share2, Home } from 'lucide-react';
 import { useReview, useComments, useCreateComment, useDeleteComment, useReportComment, useUserReactions, useToggleCommentReaction } from '@/hooks/useReviews';
+import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { LanguageBadge } from '@/components/LanguageBadge';
@@ -24,6 +25,9 @@ export default function ReviewDetails() {
   
   const { data: review, isLoading: reviewLoading, error: reviewError } = useReview(id);
   const { data: comments = [], isLoading: commentsLoading } = useComments(id);
+  
+  // Enable real-time updates for comments
+  useRealtimeComments(id);
   
   const createComment = useCreateComment();
   const deleteCommentMutation = useDeleteComment();
