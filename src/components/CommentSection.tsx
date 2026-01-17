@@ -169,7 +169,7 @@ export function CommentSection({
     return 'Posting as Guest';
   };
 
-  const showNameInput = !isLoggedIn && !isAnonymous;
+  const showNameInput = !isAnonymous;
 
   const renderComment = (comment: Comment, isReply = false, index = 0) => (
     <article
