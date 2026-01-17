@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Share2, Home } from 'lucide-react';
-import { useReview, useComments, useCreateComment, useDeleteComment, useReportComment, useUserReactions, useToggleCommentReaction } from '@/hooks/useReviews';
+import { useReview, useComments, useCreateComment, useUpdateComment, useDeleteComment, useReportComment, useUserReactions, useToggleCommentReaction } from '@/hooks/useReviews';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
@@ -30,6 +30,7 @@ export default function ReviewDetails() {
   useRealtimeComments(id);
   
   const createComment = useCreateComment();
+  const updateCommentMutation = useUpdateComment();
   const deleteCommentMutation = useDeleteComment();
   const reportCommentMutation = useReportComment();
   const toggleReactionMutation = useToggleCommentReaction();
@@ -77,6 +78,11 @@ export default function ReviewDetails() {
       device_id: deviceId,
       parent_id: parentId || null,
     });
+  };
+
+  const handleEditComment = (commentId: string, text: string) => {
+    if (!id) return;
+    updateCommentMutation.mutate({ commentId, text, reviewId: id });
   };
 
   const handleDeleteComment = (commentId: string) => {
@@ -244,6 +250,7 @@ export default function ReviewDetails() {
                 comments={comments}
                 isLoading={commentsLoading}
                 onAddComment={handleAddComment}
+                onEditComment={handleEditComment}
                 onDeleteComment={handleDeleteComment}
                 onReportComment={handleReportComment}
                 onReactToComment={handleReactToComment}

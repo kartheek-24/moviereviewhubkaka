@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from 'react';
-import { Send, Flag, Trash2, User, Reply, ChevronDown, ChevronUp, Info } from 'lucide-react';
+import { Send, Flag, Trash2, User, Reply, ChevronDown, ChevronUp, Info, Pencil, X, Check } from 'lucide-react';
 import { Comment, ReactionType } from '@/services/reviewService';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -18,6 +18,7 @@ interface CommentSectionProps {
   comments: Comment[];
   isLoading?: boolean;
   onAddComment?: (text: string, isAnonymous: boolean, customName?: string, parentId?: string | null) => void;
+  onEditComment?: (commentId: string, text: string) => void;
   onDeleteComment?: (commentId: string) => void;
   onReportComment?: (commentId: string, reason?: string) => void;
   onReactToComment?: (commentId: string, reactionType: ReactionType) => void;
@@ -35,6 +36,7 @@ export function CommentSection({
   comments,
   isLoading = false,
   onAddComment,
+  onEditComment,
   onDeleteComment,
   onReportComment,
   onReactToComment,
@@ -61,6 +63,8 @@ export function CommentSection({
     return '';
   });
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
+  const [editingComment, setEditingComment] = useState<string | null>(null);
+  const [editText, setEditText] = useState('');
 
   // Persist custom name to localStorage
   useEffect(() => {
@@ -163,6 +167,34 @@ export function CommentSection({
     return false;
   };
 
+  const canEdit = (comment: Comment) => {
+    // Only logged-in users can edit their own comments
+    if (currentUserId && comment.user_id === currentUserId) return true;
+    return false;
+  };
+
+  const handleStartEdit = (comment: Comment) => {
+    setEditingComment(comment.id);
+    setEditText(comment.text);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingComment(null);
+    setEditText('');
+  };
+
+  const handleSaveEdit = async (commentId: string) => {
+    if (!editText.trim()) return;
+    setIsSubmitting(true);
+    try {
+      onEditComment?.(commentId, editText.trim());
+      setEditingComment(null);
+      setEditText('');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const getIdentityLabel = () => {
     if (isAnonymous) return 'Posting as Anonymous';
     if (isLoggedIn) return 'Posting as You';
@@ -172,87 +204,143 @@ export function CommentSection({
 
   const showNameInput = !isAnonymous;
 
-  const renderComment = (comment: Comment, isReply = false, index = 0) => (
-    <article
-      key={comment.id}
-      className={cn(
-        'glass-card rounded-lg p-4 animate-fade-in',
-        isReply && 'ml-6 border-l-2 border-primary/20'
-      )}
-      style={{ animationDelay: `${index * 50}ms` }}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className={cn(
-              'text-sm font-medium',
-              comment.display_name === 'Anonymous' || comment.display_name === 'Guest'
-                ? 'text-muted-foreground italic'
-                : 'text-foreground'
-            )}>
-              {comment.display_name}
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {format(new Date(comment.created_at), 'MMM d, yyyy')}
-            </span>
-            {comment.reported && (
-              <span className="text-xs text-amber-500">Reported</span>
-            )}
-          </div>
-          <p className="text-sm text-foreground/90 whitespace-pre-wrap mb-2">
-            <LinkifiedText text={comment.text} />
-          </p>
-          
-          {/* Reactions and Reply button */}
-          <div className="flex items-center gap-2">
-            <CommentReactions
-              commentId={comment.id}
-              likeCount={comment.like_count}
-              dislikeCount={comment.dislike_count}
-              loveCount={comment.love_count}
-              userReaction={userReactions.get(comment.id) || null}
-              onReact={handleReact}
-            />
+  const renderComment = (comment: Comment, isReply = false, index = 0) => {
+    const isEditing = editingComment === comment.id;
+
+    return (
+      <article
+        key={comment.id}
+        className={cn(
+          'glass-card rounded-lg p-4 animate-fade-in',
+          isReply && 'ml-6 border-l-2 border-primary/20'
+        )}
+        style={{ animationDelay: `${index * 50}ms` }}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className={cn(
+                'text-sm font-medium',
+                comment.display_name === 'Anonymous' || comment.display_name === 'Guest'
+                  ? 'text-muted-foreground italic'
+                  : 'text-foreground'
+              )}>
+                {comment.display_name}
+              </span>
+              <span className="text-xs text-muted-foreground">
+                {format(new Date(comment.created_at), 'MMM d, yyyy')}
+              </span>
+              {comment.reported && (
+                <span className="text-xs text-amber-500">Reported</span>
+              )}
+            </div>
             
-            {!isReply && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
-                className="h-7 px-2 gap-1 text-xs text-muted-foreground hover:text-foreground"
-              >
-                <Reply className="h-3.5 w-3.5" />
-                Reply
-              </Button>
+            {isEditing ? (
+              <div className="space-y-2">
+                <Textarea
+                  value={editText}
+                  onChange={(e) => setEditText(e.target.value)}
+                  className="min-h-[80px] bg-muted border-0 focus-visible:ring-1 focus-visible:ring-primary resize-none"
+                  maxLength={500}
+                  autoFocus
+                />
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">
+                    {editText.length}/500
+                  </span>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={handleCancelEdit}
+                      className="h-7 px-2 gap-1 text-xs"
+                    >
+                      <X className="h-3.5 w-3.5" />
+                      Cancel
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleSaveEdit(comment.id)}
+                      disabled={!editText.trim() || isSubmitting || editText.length > 500}
+                      className="h-7 px-2 gap-1 text-xs bg-primary text-primary-foreground hover:bg-primary/90"
+                    >
+                      <Check className="h-3.5 w-3.5" />
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <p className="text-sm text-foreground/90 whitespace-pre-wrap mb-2">
+                  <LinkifiedText text={comment.text} />
+                </p>
+                
+                {/* Reactions and Reply button */}
+                <div className="flex items-center gap-2">
+                  <CommentReactions
+                    commentId={comment.id}
+                    likeCount={comment.like_count}
+                    dislikeCount={comment.dislike_count}
+                    loveCount={comment.love_count}
+                    userReaction={userReactions.get(comment.id) || null}
+                    onReact={handleReact}
+                  />
+                  
+                  {!isReply && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setReplyingTo(replyingTo === comment.id ? null : comment.id)}
+                      className="h-7 px-2 gap-1 text-xs text-muted-foreground hover:text-foreground"
+                    >
+                      <Reply className="h-3.5 w-3.5" />
+                      Reply
+                    </Button>
+                  )}
+                </div>
+              </>
             )}
           </div>
-        </div>
-        
-        <div className="flex items-center gap-1 flex-shrink-0">
-          {canDelete(comment) && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleDelete(comment.id)}
-              className="h-8 w-8 text-muted-foreground hover:text-destructive"
-            >
-              <Trash2 className="w-4 h-4" />
-            </Button>
+          
+          {!isEditing && (
+            <div className="flex items-center gap-1 flex-shrink-0">
+              {canEdit(comment) && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleStartEdit(comment)}
+                  className="h-8 w-8 text-muted-foreground hover:text-primary"
+                >
+                  <Pencil className="w-4 h-4" />
+                </Button>
+              )}
+              {canDelete(comment) && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleDelete(comment.id)}
+                  className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+              {!comment.reported && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => handleReport(comment.id)}
+                  className="h-8 w-8 text-muted-foreground hover:text-amber-500"
+                >
+                  <Flag className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
           )}
-          {!comment.reported && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleReport(comment.id)}
-              className="h-8 w-8 text-muted-foreground hover:text-amber-500"
-            >
-              <Flag className="w-4 h-4" />
-            </Button>
-          )}
         </div>
-      </div>
-    </article>
-  );
+      </article>
+    );
+  };
 
   return (
     <div className="space-y-6">

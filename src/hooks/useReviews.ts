@@ -5,6 +5,7 @@ import {
   fetchCommentsByReviewId,
   fetchLanguages,
   createComment,
+  updateComment,
   deleteComment,
   reportComment,
   approveComment,
@@ -192,6 +193,31 @@ export function useCreateComment() {
       toast({
         title: 'Error',
         description: error.message || 'Failed to post comment. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+}
+
+// Hook to update a comment
+export function useUpdateComment() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: ({ commentId, text, reviewId }: { commentId: string; text: string; reviewId: string }) => 
+      updateComment(commentId, text).then(() => reviewId),
+    onSuccess: (reviewId) => {
+      queryClient.invalidateQueries({ queryKey: ['comments', reviewId] });
+      toast({
+        title: 'Comment updated',
+        description: 'Your comment has been updated.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update comment.',
         variant: 'destructive',
       });
     },
