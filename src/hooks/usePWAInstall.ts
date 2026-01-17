@@ -63,3 +63,63 @@ export function usePWAInstallCount() {
 
   return { count, isLoading };
 }
+
+export interface PlatformBreakdown {
+  platform: string;
+  count: number;
+  fill: string;
+}
+
+const PLATFORM_COLORS: Record<string, string> = {
+  android: 'hsl(160, 60%, 45%)',
+  ios: 'hsl(220, 70%, 50%)',
+  desktop: 'hsl(38, 92%, 50%)',
+};
+
+const PLATFORM_LABELS: Record<string, string> = {
+  android: 'Android',
+  ios: 'iOS',
+  desktop: 'Desktop',
+};
+
+export function usePWAInstallsByPlatform() {
+  const [data, setData] = useState<PlatformBreakdown[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPlatformBreakdown = async () => {
+      try {
+        const { data: installs, error } = await supabase
+          .from('pwa_installs')
+          .select('platform');
+
+        if (error) throw error;
+
+        // Count by platform
+        const counts: Record<string, number> = {};
+        installs?.forEach((install) => {
+          const platform = install.platform || 'desktop';
+          counts[platform] = (counts[platform] || 0) + 1;
+        });
+
+        // Transform to chart data
+        const breakdown: PlatformBreakdown[] = Object.entries(counts).map(([platform, count]) => ({
+          platform: PLATFORM_LABELS[platform] || platform,
+          count,
+          fill: PLATFORM_COLORS[platform] || 'hsl(280, 60%, 50%)',
+        }));
+
+        setData(breakdown);
+      } catch (error) {
+        console.error('Failed to fetch PWA platform breakdown:', error);
+        setData([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchPlatformBreakdown();
+  }, []);
+
+  return { data, isLoading };
+}
