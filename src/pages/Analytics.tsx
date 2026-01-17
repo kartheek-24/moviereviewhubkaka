@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3, Eye, MousePointerClick, Clock, ArrowUpRight, Globe, Smartphone, Monitor, MapPin, Download } from 'lucide-react';
+import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3, Eye, MousePointerClick, Clock, Smartphone, Monitor, Download } from 'lucide-react';
 import { useReviews, useLanguages } from '@/hooks/useReviews';
 import { usePWAInstallCount, usePWAInstallsByPlatform } from '@/hooks/usePWAInstall';
 import { Button } from '@/components/ui/button';
@@ -51,26 +51,9 @@ const visitorAnalytics = {
     { date: 'Jan 13', visitors: 256, pageviews: 688 },
     { date: 'Jan 14', visitors: 82, pageviews: 196 },
   ],
-  topPages: [
-    { page: 'Home', views: 246 },
-    { page: 'Adipurush Review', views: 230 },
-    { page: 'Pushpa 2 Review', views: 139 },
-    { page: 'Salaar Review', views: 55 },
-    { page: 'Animal Review', views: 34 },
-  ],
-  trafficSources: [
-    { source: 'Direct', visitors: 442 },
-    { source: 'Google', visitors: 2 },
-  ],
   deviceTypes: [
     { device: 'Mobile', visitors: 434, fill: 'hsl(38, 92%, 50%)' },
     { device: 'Desktop', visitors: 10, fill: 'hsl(220, 70%, 50%)' },
-  ],
-  countries: [
-    { country: 'United States', visitors: 373, code: 'US' },
-    { country: 'India', visitors: 63, code: 'IN' },
-    { country: 'Canada', visitors: 7, code: 'CA' },
-    { country: 'Sweden', visitors: 1, code: 'SE' },
   ],
 };
 
@@ -428,33 +411,58 @@ export default function Analytics() {
                       </CardContent>
                     </Card>
 
-                    {/* Traffic Sources */}
+                    {/* Review Activity Summary */}
                     <Card className="bg-card/50 border-border/50">
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
-                          <Globe className="w-5 h-5 text-primary" />
-                          Traffic Sources
+                          <Film className="w-5 h-5 text-primary" />
+                          Content Summary
                         </CardTitle>
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          {visitorAnalytics.trafficSources.map((source, i) => (
-                            <div key={i}>
-                              <div className="flex justify-between mb-1">
-                                <span className="text-sm text-foreground">{source.source}</span>
-                                <span className="text-sm font-medium text-foreground">{source.visitors}</span>
-                              </div>
-                              <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                                <div 
-                                  className="h-full rounded-full transition-all duration-500"
-                                  style={{ 
-                                    width: `${(source.visitors / visitorAnalytics.totalVisitors) * 100}%`,
-                                    backgroundColor: CHART_COLORS[i % CHART_COLORS.length]
-                                  }}
-                                />
-                              </div>
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="text-sm text-foreground">Total Reviews</span>
+                              <span className="text-sm font-medium text-foreground">{stats.totalReviews}</span>
                             </div>
-                          ))}
+                            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className="h-full rounded-full transition-all duration-500 bg-primary"
+                                style={{ width: '100%' }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="text-sm text-foreground">Total Comments</span>
+                              <span className="text-sm font-medium text-foreground">{stats.totalComments}</span>
+                            </div>
+                            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{ 
+                                  width: `${stats.totalReviews > 0 ? Math.min((stats.totalComments / (stats.totalReviews * 10)) * 100, 100) : 0}%`,
+                                  backgroundColor: CHART_COLORS[1]
+                                }}
+                              />
+                            </div>
+                          </div>
+                          <div>
+                            <div className="flex justify-between mb-1">
+                              <span className="text-sm text-foreground">Helpful Votes</span>
+                              <span className="text-sm font-medium text-foreground">{stats.totalHelpful}</span>
+                            </div>
+                            <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                              <div 
+                                className="h-full rounded-full transition-all duration-500"
+                                style={{ 
+                                  width: `${stats.totalReviews > 0 ? Math.min((stats.totalHelpful / (stats.totalReviews * 10)) * 100, 100) : 0}%`,
+                                  backgroundColor: CHART_COLORS[2]
+                                }}
+                              />
+                            </div>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
@@ -545,43 +553,6 @@ export default function Analytics() {
                               </BarChart>
                             </ResponsiveContainer>
                           )}
-                        </div>
-                      </CardContent>
-                    </Card>
-
-                    {/* Countries */}
-                    <Card className="bg-card/50 border-border/50">
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <MapPin className="w-5 h-5 text-primary" />
-                          Visitor Locations
-                        </CardTitle>
-                        <CardDescription>Where your visitors are from</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-4">
-                          {visitorAnalytics.countries.map((country, i) => (
-                            <div key={i} className="flex items-center gap-4">
-                              <div className="w-10 h-10 rounded-lg bg-muted/50 flex items-center justify-center font-bold text-sm">
-                                {country.code}
-                              </div>
-                              <div className="flex-1">
-                                <div className="flex justify-between mb-1">
-                                  <span className="text-sm text-foreground">{country.country}</span>
-                                  <span className="text-sm font-medium text-foreground">{country.visitors}</span>
-                                </div>
-                                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                                  <div 
-                                    className="h-full rounded-full transition-all duration-500"
-                                    style={{ 
-                                      width: `${(country.visitors / visitorAnalytics.totalVisitors) * 100}%`,
-                                      backgroundColor: CHART_COLORS[i % CHART_COLORS.length]
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                            </div>
-                          ))}
                         </div>
                       </CardContent>
                     </Card>
