@@ -111,16 +111,16 @@ const ReviewForm = ({
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="rating">Rating * (1-10)</Label>
+        <Label htmlFor="rating">Rating * (0-5)</Label>
         <Input
           id="rating"
           type="number"
-          min={1}
-          max={10}
-          step={0.1}
+          min={0}
+          max={5}
+          step={0.25}
           value={rating}
-          onChange={(e) => setRating(Math.min(10, Math.max(1, parseFloat(e.target.value) || 1)))}
-          placeholder="Rating (1-10)"
+          onChange={(e) => setRating(Math.min(5, Math.max(0, parseFloat(e.target.value) || 0)))}
+          placeholder="Rating (0-5)"
           className="bg-muted border-0"
         />
       </div>
@@ -319,7 +319,7 @@ export default function Admin() {
   // Form state
   const [title, setTitle] = useState('');
   const [language, setLanguage] = useState('');
-  const [rating, setRating] = useState(5);
+  const [rating, setRating] = useState(2.5);
   const [snippet, setSnippet] = useState('');
   const [content, setContent] = useState('');
   const [posterUrl, setPosterUrl] = useState('');
