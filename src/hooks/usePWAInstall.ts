@@ -74,6 +74,32 @@ export function usePWAInstallPrompt() {
   return { canInstall, isInstalled, promptInstall };
 }
 
+// Track install attempts for analytics
+export async function trackInstallAttempt(
+  deviceId: string,
+  userId: string | null,
+  outcome: 'prompted' | 'accepted' | 'dismissed' | 'fallback',
+  source: 'floating_button' | 'settings' = 'floating_button'
+) {
+  try {
+    const platform = navigator.userAgent.includes('Android') 
+      ? 'android' 
+      : navigator.userAgent.includes('iPhone') || navigator.userAgent.includes('iPad')
+        ? 'ios'
+        : 'desktop';
+
+    await supabase.from('pwa_install_attempts').insert({
+      device_id: deviceId,
+      user_id: userId,
+      outcome,
+      platform,
+      source,
+    });
+  } catch (error) {
+    console.error('Failed to track install attempt:', error);
+  }
+}
+
 export function usePWAInstallTracker() {
   const { deviceId } = useApp();
   const { user } = useAuth();
@@ -193,4 +219,65 @@ export function usePWAInstallsByPlatform() {
   }, []);
 
   return { data, isLoading };
+}
+
+// Hook to fetch install attempt analytics
+export interface InstallAttemptStats {
+  totalPrompted: number;
+  totalAccepted: number;
+  totalDismissed: number;
+  totalFallback: number;
+  conversionRate: number;
+}
+
+export function useInstallAttemptStats() {
+  const [stats, setStats] = useState<InstallAttemptStats | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('pwa_install_attempts')
+          .select('outcome');
+
+        if (error) throw error;
+
+        const counts = {
+          prompted: 0,
+          accepted: 0,
+          dismissed: 0,
+          fallback: 0,
+        };
+
+        data?.forEach((attempt: { outcome: string }) => {
+          if (attempt.outcome in counts) {
+            counts[attempt.outcome as keyof typeof counts]++;
+          }
+        });
+
+        const totalPrompted = counts.prompted + counts.accepted + counts.dismissed;
+        const conversionRate = totalPrompted > 0 
+          ? (counts.accepted / totalPrompted) * 100 
+          : 0;
+
+        setStats({
+          totalPrompted,
+          totalAccepted: counts.accepted,
+          totalDismissed: counts.dismissed,
+          totalFallback: counts.fallback,
+          conversionRate,
+        });
+      } catch (error) {
+        console.error('Failed to fetch install attempt stats:', error);
+        setStats(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchStats();
+  }, []);
+
+  return { stats, isLoading };
 }
