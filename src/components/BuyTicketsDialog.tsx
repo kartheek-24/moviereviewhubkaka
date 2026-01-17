@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Ticket, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import {
   Dialog,
@@ -68,8 +68,12 @@ interface BuyTicketsDialogProps {
   movieTitle: string;
 }
 
+const ZIPCODE_STORAGE_KEY = 'moviehub_user_zipcode';
+
 export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsDialogProps) {
-  const [zipCode, setZipCode] = useState('');
+  const [zipCode, setZipCode] = useState(() => {
+    return localStorage.getItem(ZIPCODE_STORAGE_KEY) || '';
+  });
   const [showTheaters, setShowTheaters] = useState(false);
   const [error, setError] = useState('');
   const [sortAscending, setSortAscending] = useState(true);
@@ -89,6 +93,9 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
       setError('Please enter a valid 5-digit zip code');
       return;
     }
+    
+    // Save zip code to localStorage
+    localStorage.setItem(ZIPCODE_STORAGE_KEY, zipCode);
     
     setError('');
     setShowTheaters(true);
