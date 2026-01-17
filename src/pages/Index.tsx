@@ -1,7 +1,6 @@
-import { useMemo } from 'react';
 import { useApp } from '@/contexts/AppContext';
-import { useAuth } from '@/contexts/AuthContext';
-import { useReviews, useLanguages } from '@/hooks/useReviews';
+import { useReviews } from '@/hooks/useReviews';
+import { useRealtimeReviews } from '@/hooks/useRealtimeReviews';
 import { Header } from '@/components/Header';
 import { Drawer } from '@/components/Drawer';
 import { ReviewCard } from '@/components/ReviewCard';
@@ -14,6 +13,9 @@ import { Button } from '@/components/ui/button';
 
 export default function Index() {
   const { selectedLanguage, setSelectedLanguage, sortBy, searchQuery } = useApp();
+  
+  // Enable real-time updates for reviews
+  useRealtimeReviews();
   
   const { data: reviews, isLoading, error } = useReviews({
     language: selectedLanguage,
