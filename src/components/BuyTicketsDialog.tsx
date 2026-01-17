@@ -16,15 +16,17 @@ interface Theater {
   logo: string;
   getUrl: (zipCode: string, movieTitle: string) => string;
   bgColor: string;
+  avgPrice: number; // Average ticket price in USD
 }
 
 const theaters: Theater[] = [
   {
-    name: 'Fandango',
-    logo: '🎟️',
+    name: 'Cinemark',
+    logo: '🎬',
     getUrl: (zipCode, movieTitle) => 
-      `https://www.fandango.com/search?q=${encodeURIComponent(movieTitle)}&zipcode=${zipCode}`,
-    bgColor: 'bg-orange-500 hover:bg-orange-600',
+      `https://www.cinemark.com/search?query=${encodeURIComponent(movieTitle)}`,
+    bgColor: 'bg-blue-600 hover:bg-blue-700',
+    avgPrice: 10.50,
   },
   {
     name: 'Regal',
@@ -32,20 +34,7 @@ const theaters: Theater[] = [
     getUrl: (zipCode, movieTitle) => 
       `https://www.regmovies.com/movies?query=${encodeURIComponent(movieTitle)}`,
     bgColor: 'bg-red-600 hover:bg-red-700',
-  },
-  {
-    name: 'Cinemark',
-    logo: '🎬',
-    getUrl: (zipCode, movieTitle) => 
-      `https://www.cinemark.com/search?query=${encodeURIComponent(movieTitle)}`,
-    bgColor: 'bg-blue-600 hover:bg-blue-700',
-  },
-  {
-    name: 'AMC Theatres',
-    logo: '🍿',
-    getUrl: (zipCode, movieTitle) => 
-      `https://www.amctheatres.com/movies?query=${encodeURIComponent(movieTitle)}`,
-    bgColor: 'bg-red-700 hover:bg-red-800',
+    avgPrice: 12.00,
   },
   {
     name: 'Atom Tickets',
@@ -53,8 +42,25 @@ const theaters: Theater[] = [
     getUrl: (zipCode, movieTitle) => 
       `https://www.atomtickets.com/movies?postal_code=${zipCode}&query=${encodeURIComponent(movieTitle)}`,
     bgColor: 'bg-purple-600 hover:bg-purple-700',
+    avgPrice: 12.50,
   },
-];
+  {
+    name: 'Fandango',
+    logo: '🎟️',
+    getUrl: (zipCode, movieTitle) => 
+      `https://www.fandango.com/search?q=${encodeURIComponent(movieTitle)}&zipcode=${zipCode}`,
+    bgColor: 'bg-orange-500 hover:bg-orange-600',
+    avgPrice: 13.00,
+  },
+  {
+    name: 'AMC Theatres',
+    logo: '🍿',
+    getUrl: (zipCode, movieTitle) => 
+      `https://www.amctheatres.com/movies?query=${encodeURIComponent(movieTitle)}`,
+    bgColor: 'bg-red-700 hover:bg-red-800',
+    avgPrice: 14.50,
+  },
+].sort((a, b) => a.avgPrice - b.avgPrice);
 
 interface BuyTicketsDialogProps {
   open: boolean;
@@ -154,6 +160,7 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
                   <span className="flex items-center gap-2">
                     <span className="text-lg">{theater.logo}</span>
                     {theater.name}
+                    <span className="text-xs opacity-80">~${theater.avgPrice.toFixed(2)}</span>
                   </span>
                   <ExternalLink className="h-4 w-4" />
                 </Button>
