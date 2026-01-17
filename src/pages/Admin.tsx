@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
-import { StarRating } from '@/components/StarRating';
+
 import { useAuth } from '@/contexts/AuthContext';
 import { useReviews, useCreateReview, useUpdateReview, useDeleteReview, useReportedComments, useDeleteComment, useApproveComment } from '@/hooks/useReviews';
 import { Review } from '@/services/reviewService';
