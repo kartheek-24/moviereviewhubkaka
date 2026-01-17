@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3, Eye, MousePointerClick, Clock, ArrowUpRight, Globe, Smartphone, Monitor, MapPin, Download } from 'lucide-react';
 import { useReviews, useLanguages } from '@/hooks/useReviews';
-import { usePWAInstallCount } from '@/hooks/usePWAInstall';
+import { usePWAInstallCount, usePWAInstallsByPlatform } from '@/hooks/usePWAInstall';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -79,6 +79,7 @@ export default function Analytics() {
   const { data: reviews = [], isLoading } = useReviews();
   const { data: languages = [] } = useLanguages();
   const { count: pwaInstallCount, isLoading: pwaLoading } = usePWAInstallCount();
+  const { data: pwaByPlatform, isLoading: pwaByPlatformLoading } = usePWAInstallsByPlatform();
   const [activeTab, setActiveTab] = useState('visitors');
 
   // Calculate stats
@@ -579,6 +580,85 @@ export default function Analytics() {
                       </CardContent>
                     </Card>
                   </div>
+
+                  {/* PWA Installs by Platform */}
+                  <Card className="bg-card/50 border-border/50">
+                    <CardHeader>
+                      <CardTitle className="text-lg flex items-center gap-2">
+                        <Download className="w-5 h-5 text-primary" />
+                        App Installs by Platform
+                      </CardTitle>
+                      <CardDescription>PWA installations breakdown</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      {pwaByPlatformLoading ? (
+                        <div className="h-48 flex items-center justify-center">
+                          <div className="animate-pulse text-muted-foreground">Loading...</div>
+                        </div>
+                      ) : pwaByPlatform.length === 0 ? (
+                        <div className="h-48 flex items-center justify-center">
+                          <p className="text-muted-foreground text-sm">No installations yet</p>
+                        </div>
+                      ) : (
+                        <div className="grid md:grid-cols-2 gap-6 items-center">
+                          <div className="h-48">
+                            <ResponsiveContainer width="100%" height="100%">
+                              <PieChart>
+                                <Pie
+                                  data={pwaByPlatform}
+                                  cx="50%"
+                                  cy="50%"
+                                  innerRadius={40}
+                                  outerRadius={70}
+                                  paddingAngle={4}
+                                  dataKey="count"
+                                  nameKey="platform"
+                                >
+                                  {pwaByPlatform.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={entry.fill} />
+                                  ))}
+                                </Pie>
+                                <Tooltip content={<CustomTooltip />} />
+                              </PieChart>
+                            </ResponsiveContainer>
+                          </div>
+                          <div className="space-y-4">
+                            {pwaByPlatform.map((platform, i) => (
+                              <div key={i} className="flex items-center gap-4">
+                                <div 
+                                  className="w-10 h-10 rounded-lg flex items-center justify-center"
+                                  style={{ backgroundColor: `${platform.fill}20` }}
+                                >
+                                  {platform.platform === 'Android' ? (
+                                    <Smartphone className="w-5 h-5" style={{ color: platform.fill }} />
+                                  ) : platform.platform === 'iOS' ? (
+                                    <Smartphone className="w-5 h-5" style={{ color: platform.fill }} />
+                                  ) : (
+                                    <Monitor className="w-5 h-5" style={{ color: platform.fill }} />
+                                  )}
+                                </div>
+                                <div className="flex-1">
+                                  <div className="flex justify-between mb-1">
+                                    <span className="text-sm text-foreground">{platform.platform}</span>
+                                    <span className="text-sm font-medium text-foreground">{platform.count}</span>
+                                  </div>
+                                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                                    <div 
+                                      className="h-full rounded-full transition-all duration-500"
+                                      style={{ 
+                                        width: `${(platform.count / (pwaInstallCount || 1)) * 100}%`,
+                                        backgroundColor: platform.fill
+                                      }}
+                                    />
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
                 </TabsContent>
 
                 {/* Content Tab */}
