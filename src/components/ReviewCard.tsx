@@ -45,7 +45,7 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
             {/* Rating & Date */}
             <div className="flex items-center gap-3 mb-2">
               <div className="flex items-center gap-1 text-primary font-semibold">
-                <span className="text-sm">Rating: {review.rating}</span>
+                <span className="text-sm">Rating: {review.rating}/5</span>
               </div>
               {review.release_date && (
                 <span className="text-xs text-muted-foreground">

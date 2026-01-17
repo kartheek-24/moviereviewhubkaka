@@ -196,7 +196,7 @@ export default function ReviewDetails() {
 
                 <div className="flex flex-wrap items-center gap-4 mb-4">
                   <div className="flex items-center gap-1 text-primary font-bold text-lg">
-                    <span>{review.rating}/10</span>
+                    <span>Rating: {review.rating}/5</span>
                   </div>
                   {review.release_date && (
                     <span className="text-sm text-muted-foreground">
