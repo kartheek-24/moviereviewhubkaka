@@ -14,7 +14,7 @@ export default function PrivacyPolicy() {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate('/settings')}
               className="text-foreground hover:bg-muted mr-3"
             >
               <ArrowLeft className="h-5 w-5" />
