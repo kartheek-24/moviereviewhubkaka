@@ -504,41 +504,47 @@ export default function Analytics() {
 
                   {/* Top Pages and Countries */}
                   <div className="grid md:grid-cols-2 gap-6">
-                    {/* Top Pages */}
+                    {/* Top Reviews by Engagement */}
                     <Card className="bg-card/50 border-border/50">
                       <CardHeader>
                         <CardTitle className="text-lg flex items-center gap-2">
                           <Eye className="w-5 h-5 text-primary" />
-                          Top Pages
+                          Top Reviews
                         </CardTitle>
-                        <CardDescription>Most visited pages</CardDescription>
+                        <CardDescription>Most engaging reviews</CardDescription>
                       </CardHeader>
                       <CardContent>
                         <div className="h-64">
-                          <ResponsiveContainer width="100%" height="100%">
-                            <BarChart data={visitorAnalytics.topPages} layout="vertical">
-                              <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" />
-                              <XAxis 
-                                type="number"
-                                tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
-                                tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
-                              />
-                              <YAxis 
-                                type="category"
-                                dataKey="page"
-                                tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
-                                tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
-                                width={100}
-                              />
-                              <Tooltip content={<CustomTooltip />} />
-                              <Bar 
-                                dataKey="views" 
-                                fill="hsl(38, 92%, 50%)" 
-                                radius={[0, 4, 4, 0]}
-                                name="Views"
-                              />
-                            </BarChart>
-                          </ResponsiveContainer>
+                          {topReviews.length === 0 ? (
+                            <div className="h-full flex items-center justify-center">
+                              <p className="text-muted-foreground text-sm">No reviews yet</p>
+                            </div>
+                          ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart data={topReviews} layout="vertical">
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" />
+                                <XAxis 
+                                  type="number"
+                                  tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
+                                  tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
+                                />
+                                <YAxis 
+                                  type="category"
+                                  dataKey="title"
+                                  tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
+                                  tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
+                                  width={100}
+                                />
+                                <Tooltip content={<CustomTooltip />} />
+                                <Bar 
+                                  dataKey="engagement" 
+                                  fill="hsl(38, 92%, 50%)" 
+                                  radius={[0, 4, 4, 0]}
+                                  name="Engagement"
+                                />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          )}
                         </div>
                       </CardContent>
                     </Card>
