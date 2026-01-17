@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3, Eye, MousePointerClick, Clock, ArrowUpRight, Globe, Smartphone, Monitor, MapPin } from 'lucide-react';
+import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3, Eye, MousePointerClick, Clock, ArrowUpRight, Globe, Smartphone, Monitor, MapPin, Download } from 'lucide-react';
 import { useReviews, useLanguages } from '@/hooks/useReviews';
+import { usePWAInstallCount } from '@/hooks/usePWAInstall';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -77,6 +78,7 @@ export default function Analytics() {
   const navigate = useNavigate();
   const { data: reviews = [], isLoading } = useReviews();
   const { data: languages = [] } = useLanguages();
+  const { count: pwaInstallCount, isLoading: pwaLoading } = usePWAInstallCount();
   const [activeTab, setActiveTab] = useState('visitors');
 
   // Calculate stats
@@ -247,7 +249,7 @@ export default function Analytics() {
                 {/* Visitors Tab */}
                 <TabsContent value="visitors" className="space-y-6">
                   {/* Visitor Stats Cards */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     <Card className="bg-gradient-to-br from-primary/20 to-primary/5 border-primary/30">
                       <CardContent className="p-4">
                         <div className="flex items-center gap-3">
@@ -299,6 +301,22 @@ export default function Analytics() {
                           <div>
                             <p className="text-3xl font-bold text-foreground">{visitorAnalytics.avgPageviewsPerVisit}</p>
                             <p className="text-xs text-muted-foreground">Pages/Visit</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-gradient-to-br from-teal-500/20 to-teal-500/5 border-teal-500/30">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="w-12 h-12 rounded-xl bg-teal-500/30 flex items-center justify-center">
+                            <Download className="w-6 h-6 text-teal-500" />
+                          </div>
+                          <div>
+                            <p className="text-3xl font-bold text-foreground">
+                              {pwaLoading ? '...' : pwaInstallCount ?? 0}
+                            </p>
+                            <p className="text-xs text-muted-foreground">App Installs</p>
                           </div>
                         </div>
                       </CardContent>

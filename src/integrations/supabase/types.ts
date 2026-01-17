@@ -228,6 +228,30 @@ export type Database = {
         }
         Relationships: []
       }
+      pwa_installs: {
+        Row: {
+          device_id: string
+          id: string
+          installed_at: string
+          platform: string | null
+          user_id: string | null
+        }
+        Insert: {
+          device_id: string
+          id?: string
+          installed_at?: string
+          platform?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          device_id?: string
+          id?: string
+          installed_at?: string
+          platform?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       reviews: {
         Row: {
           comment_count: number
