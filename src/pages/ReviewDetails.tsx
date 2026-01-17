@@ -1,6 +1,6 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, Share2, Home } from 'lucide-react';
+import { ArrowLeft, Calendar, Share2, Home, Ticket } from 'lucide-react';
 import { useReview, useComments, useCreateComment, useUpdateComment, useDeleteComment, useReportComment, useUserReactions, useToggleCommentReaction } from '@/hooks/useReviews';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 import { useAuth } from '@/contexts/AuthContext';
@@ -9,6 +9,7 @@ import { LanguageBadge } from '@/components/LanguageBadge';
 import { HelpfulButton } from '@/components/HelpfulButton';
 import { CommentSection } from '@/components/CommentSection';
 import { ShareDialog } from '@/components/ShareDialog';
+import { BuyTicketsDialog } from '@/components/BuyTicketsDialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -22,6 +23,7 @@ export default function ReviewDetails() {
   const { user, isAdmin, displayName: authDisplayName } = useAuth();
   const { deviceId } = useApp();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [buyTicketsDialogOpen, setBuyTicketsDialogOpen] = useState(false);
   
   const { data: review, isLoading: reviewLoading, error: reviewError } = useReview(id);
   const { data: comments = [], isLoading: commentsLoading } = useComments(id);
@@ -220,12 +222,33 @@ export default function ReviewDetails() {
                 </div>
 
                 {review.tags && review.tags.length > 0 && (
-                  <div className="flex flex-wrap gap-2 mb-4">
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
                     {review.tags.map((tag) => (
                       <Badge key={tag} variant="secondary" className="text-xs">
                         {tag}
                       </Badge>
                     ))}
+                    <Button
+                      onClick={() => setBuyTicketsDialogOpen(true)}
+                      className="ml-2 bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold shadow-lg shadow-amber-500/30 animate-pulse hover:animate-none transition-all duration-300"
+                      size="sm"
+                    >
+                      <Ticket className="h-4 w-4 mr-1" />
+                      Buy Tickets
+                    </Button>
+                  </div>
+                )}
+                
+                {(!review.tags || review.tags.length === 0) && (
+                  <div className="mb-4">
+                    <Button
+                      onClick={() => setBuyTicketsDialogOpen(true)}
+                      className="bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-600 hover:to-yellow-600 text-black font-bold shadow-lg shadow-amber-500/30 animate-pulse hover:animate-none transition-all duration-300"
+                      size="sm"
+                    >
+                      <Ticket className="h-4 w-4 mr-1" />
+                      Buy Tickets
+                    </Button>
                   </div>
                 )}
 
@@ -265,13 +288,20 @@ export default function ReviewDetails() {
       </ScrollArea>
 
       {review && (
-        <ShareDialog
-          open={shareDialogOpen}
-          onOpenChange={setShareDialogOpen}
-          title={review.title}
-          text={review.snippet}
-          url={shareUrl}
-        />
+        <>
+          <ShareDialog
+            open={shareDialogOpen}
+            onOpenChange={setShareDialogOpen}
+            title={review.title}
+            text={review.snippet}
+            url={shareUrl}
+          />
+          <BuyTicketsDialog
+            open={buyTicketsDialogOpen}
+            onOpenChange={setBuyTicketsDialogOpen}
+            movieTitle={review.title}
+          />
+        </>
       )}
     </div>
   );
