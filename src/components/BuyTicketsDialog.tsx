@@ -251,7 +251,7 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
           </form>
         ) : (
           <div className="space-y-3">
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-2">
               <p className="text-sm text-muted-foreground">
                 Near <span className="font-semibold text-foreground">{zipCode}</span>
               </p>
@@ -266,9 +266,12 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
                 ) : (
                   <ArrowDown className="h-3.5 w-3.5" />
                 )}
-                Price: {sortAscending ? 'Low → High' : 'High → Low'}
+                Est. Price: {sortAscending ? 'Low → High' : 'High → Low'}
               </Button>
             </div>
+            <p className="text-xs text-muted-foreground/70 text-center mb-3">
+              * Prices are estimates. Actual prices vary by showtime, format & location.
+            </p>
             <div className="grid gap-2">
               {sortedTheaters.map((theater) => (
                 <Button
@@ -279,7 +282,7 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
                   <span className="flex items-center gap-2">
                     <span className="text-lg">{theater.logo}</span>
                     {theater.name}
-                    <span className="text-xs opacity-80">~${theater.avgPrice.toFixed(2)}</span>
+                    <span className="text-xs opacity-80">Est. ${theater.avgPrice.toFixed(2)}</span>
                   </span>
                   {isMobileDevice() && theater.getAppUrl ? (
                     <Smartphone className="h-4 w-4" />
