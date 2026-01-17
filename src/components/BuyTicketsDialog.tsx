@@ -15,10 +15,26 @@ interface Theater {
   name: string;
   logo: string;
   getUrl: (zipCode: string, movieTitle: string) => string;
-  getAppUrl?: (zipCode: string, movieTitle: string) => string; // Deep link URL for mobile apps
+  getAppUrl?: (zipCode: string, movieTitle: string) => string;
   bgColor: string;
-  avgPrice: number; // Average ticket price in USD
+  basePrice: number; // Base ticket price for Standard format
 }
+
+type TheaterFormat = 'standard' | 'dolby' | 'imax';
+
+interface FormatOption {
+  id: TheaterFormat;
+  name: string;
+  icon: string;
+  priceMultiplier: number;
+  description: string;
+}
+
+const formatOptions: FormatOption[] = [
+  { id: 'standard', name: 'Standard', icon: '🎬', priceMultiplier: 1, description: 'Regular 2D' },
+  { id: 'dolby', name: 'Dolby Cinema', icon: '🔊', priceMultiplier: 1.4, description: 'Premium sound & vision' },
+  { id: 'imax', name: 'IMAX', icon: '📽️', priceMultiplier: 1.6, description: 'Giant screen experience' },
+];
 
 // Helper to detect if user is on mobile
 const isMobileDevice = () => {
@@ -31,55 +47,50 @@ const theaters: Theater[] = [
     logo: '🎬',
     getUrl: (zipCode, movieTitle) => 
       `https://www.cinemark.com/search?query=${encodeURIComponent(movieTitle)}`,
-    // Cinemark app deep link - uses universal link
     getAppUrl: (zipCode, movieTitle) =>
       `https://www.cinemark.com/search?query=${encodeURIComponent(movieTitle)}`,
     bgColor: 'bg-blue-600 hover:bg-blue-700',
-    avgPrice: 10.50,
+    basePrice: 10.50,
   },
   {
     name: 'Regal',
     logo: '👑',
     getUrl: (zipCode, movieTitle) => 
       `https://www.regmovies.com/movies?query=${encodeURIComponent(movieTitle)}`,
-    // Regal app uses universal links
     getAppUrl: (zipCode, movieTitle) =>
       `regal://movies/search?q=${encodeURIComponent(movieTitle)}`,
     bgColor: 'bg-red-600 hover:bg-red-700',
-    avgPrice: 12.00,
+    basePrice: 12.00,
   },
   {
     name: 'Atom Tickets',
     logo: '⚛️',
     getUrl: (zipCode, movieTitle) => 
       `https://www.atomtickets.com/movies?postal_code=${zipCode}&query=${encodeURIComponent(movieTitle)}`,
-    // Atom Tickets app deep link
     getAppUrl: (zipCode, movieTitle) =>
       `atomtickets://search?query=${encodeURIComponent(movieTitle)}&zip=${zipCode}`,
     bgColor: 'bg-purple-600 hover:bg-purple-700',
-    avgPrice: 12.50,
+    basePrice: 12.50,
   },
   {
     name: 'Fandango',
     logo: '🎟️',
     getUrl: (zipCode, movieTitle) => 
       `https://www.fandango.com/search?q=${encodeURIComponent(movieTitle)}&zipcode=${zipCode}`,
-    // Fandango app deep link
     getAppUrl: (zipCode, movieTitle) =>
       `fandango://search?q=${encodeURIComponent(movieTitle)}&zip=${zipCode}`,
     bgColor: 'bg-orange-500 hover:bg-orange-600',
-    avgPrice: 13.00,
+    basePrice: 13.00,
   },
   {
     name: 'AMC Theatres',
     logo: '🍿',
     getUrl: (zipCode, movieTitle) => 
       `https://www.amctheatres.com/movies?query=${encodeURIComponent(movieTitle)}`,
-    // AMC app deep link
     getAppUrl: (zipCode, movieTitle) =>
       `amctheatres://search?query=${encodeURIComponent(movieTitle)}`,
     bgColor: 'bg-red-700 hover:bg-red-800',
-    avgPrice: 14.50,
+    basePrice: 14.50,
   },
 ];
 
@@ -98,8 +109,10 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
   const [showTheaters, setShowTheaters] = useState(false);
   const [error, setError] = useState('');
   const [sortAscending, setSortAscending] = useState(true);
+  const [selectedFormat, setSelectedFormat] = useState<TheaterFormat>('standard');
 
   const hasSavedZipCode = Boolean(localStorage.getItem(ZIPCODE_STORAGE_KEY));
+  const currentFormat = formatOptions.find(f => f.id === selectedFormat)!;
 
   const handleClearZipCode = () => {
     localStorage.removeItem(ZIPCODE_STORAGE_KEY);
@@ -107,11 +120,18 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
     setShowTheaters(false);
   };
 
+  // Calculate prices based on selected format
+  const getEstimatedPrice = useCallback((basePrice: number) => {
+    return basePrice * currentFormat.priceMultiplier;
+  }, [currentFormat]);
+
   const sortedTheaters = useMemo(() => {
-    return [...theaters].sort((a, b) => 
-      sortAscending ? a.avgPrice - b.avgPrice : b.avgPrice - a.avgPrice
-    );
-  }, [sortAscending]);
+    return [...theaters].sort((a, b) => {
+      const priceA = getEstimatedPrice(a.basePrice);
+      const priceB = getEstimatedPrice(b.basePrice);
+      return sortAscending ? priceA - priceB : priceB - priceA;
+    });
+  }, [sortAscending, getEstimatedPrice]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -251,7 +271,34 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
           </form>
         ) : (
           <div className="space-y-3">
-            <div className="flex items-center justify-between mb-2">
+            {/* Format Selection */}
+            <div className="space-y-2">
+              <Label className="text-xs text-muted-foreground">Select Format</Label>
+              <div className="grid grid-cols-3 gap-2">
+                {formatOptions.map((format) => (
+                  <Button
+                    key={format.id}
+                    type="button"
+                    variant={selectedFormat === format.id ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedFormat(format.id)}
+                    className={`flex flex-col items-center gap-0.5 h-auto py-2 ${
+                      selectedFormat === format.id 
+                        ? 'bg-amber-500 hover:bg-amber-600 text-black' 
+                        : ''
+                    }`}
+                  >
+                    <span className="text-base">{format.icon}</span>
+                    <span className="text-xs font-medium">{format.name}</span>
+                  </Button>
+                ))}
+              </div>
+              <p className="text-xs text-muted-foreground text-center">
+                {currentFormat.description}
+              </p>
+            </div>
+
+            <div className="flex items-center justify-between">
               <p className="text-sm text-muted-foreground">
                 Near <span className="font-semibold text-foreground">{zipCode}</span>
               </p>
@@ -269,9 +316,7 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
                 Est. Price: {sortAscending ? 'Low → High' : 'High → Low'}
               </Button>
             </div>
-            <p className="text-xs text-muted-foreground/70 text-center mb-3">
-              * Prices are estimates. Actual prices vary by showtime, format & location.
-            </p>
+
             <div className="grid gap-2">
               {sortedTheaters.map((theater) => (
                 <Button
@@ -282,7 +327,9 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
                   <span className="flex items-center gap-2">
                     <span className="text-lg">{theater.logo}</span>
                     {theater.name}
-                    <span className="text-xs opacity-80">Est. ${theater.avgPrice.toFixed(2)}</span>
+                    <span className="text-xs opacity-80">
+                      Est. ${getEstimatedPrice(theater.basePrice).toFixed(2)}
+                    </span>
                   </span>
                   {isMobileDevice() && theater.getAppUrl ? (
                     <Smartphone className="h-4 w-4" />
@@ -292,9 +339,14 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
                 </Button>
               ))}
             </div>
+
+            <p className="text-xs text-muted-foreground/70 text-center py-1 border-t border-border">
+              💡 Prices vary by showtime, day & location. Estimates based on avg. {currentFormat.name} pricing.
+            </p>
+
             <Button 
               variant="outline" 
-              className="w-full mt-2"
+              className="w-full"
               onClick={() => setShowTheaters(false)}
             >
               Change Zip Code
