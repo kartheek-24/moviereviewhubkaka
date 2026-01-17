@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Ticket, ExternalLink } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Ticket, ExternalLink, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -60,7 +60,7 @@ const theaters: Theater[] = [
     bgColor: 'bg-red-700 hover:bg-red-800',
     avgPrice: 14.50,
   },
-].sort((a, b) => a.avgPrice - b.avgPrice);
+];
 
 interface BuyTicketsDialogProps {
   open: boolean;
@@ -72,6 +72,13 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
   const [zipCode, setZipCode] = useState('');
   const [showTheaters, setShowTheaters] = useState(false);
   const [error, setError] = useState('');
+  const [sortAscending, setSortAscending] = useState(true);
+
+  const sortedTheaters = useMemo(() => {
+    return [...theaters].sort((a, b) => 
+      sortAscending ? a.avgPrice - b.avgPrice : b.avgPrice - a.avgPrice
+    );
+  }, [sortAscending]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -147,11 +154,26 @@ export function BuyTicketsDialog({ open, onOpenChange, movieTitle }: BuyTicketsD
           </form>
         ) : (
           <div className="space-y-3">
-            <p className="text-sm text-muted-foreground text-center mb-4">
-              Showing theaters near <span className="font-semibold text-foreground">{zipCode}</span>
-            </p>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm text-muted-foreground">
+                Near <span className="font-semibold text-foreground">{zipCode}</span>
+              </p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSortAscending(!sortAscending)}
+                className="flex items-center gap-1.5 text-xs"
+              >
+                {sortAscending ? (
+                  <ArrowUp className="h-3.5 w-3.5" />
+                ) : (
+                  <ArrowDown className="h-3.5 w-3.5" />
+                )}
+                Price: {sortAscending ? 'Low → High' : 'High → Low'}
+              </Button>
+            </div>
             <div className="grid gap-2">
-              {theaters.map((theater) => (
+              {sortedTheaters.map((theater) => (
                 <Button
                   key={theater.name}
                   onClick={() => handleTheaterClick(theater)}
