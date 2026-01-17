@@ -54,14 +54,18 @@ export default function ReviewDetails() {
     setShareDialogOpen(true);
   };
 
-  const handleAddComment = (text: string, isAnonymous: boolean, parentId?: string | null) => {
+  const handleAddComment = (text: string, isAnonymous: boolean, customName?: string, parentId?: string | null) => {
     if (!id) return;
 
     let displayName = 'Guest';
     if (user) {
       displayName = isAnonymous ? 'Anonymous' : (authDisplayName || user.email?.split('@')[0] || 'User');
+    } else if (isAnonymous) {
+      displayName = 'Anonymous';
+    } else if (customName) {
+      displayName = customName;
     } else {
-      displayName = isAnonymous ? 'Anonymous' : 'Guest';
+      displayName = 'Guest';
     }
 
     createComment.mutate({

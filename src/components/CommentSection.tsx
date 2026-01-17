@@ -3,6 +3,7 @@ import { Send, Flag, Trash2, User, Reply, ChevronDown, ChevronUp } from 'lucide-
 import { Comment, ReactionType } from '@/services/reviewService';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { EmptyState } from './EmptyState';
@@ -15,7 +16,7 @@ interface CommentSectionProps {
   reviewId: string;
   comments: Comment[];
   isLoading?: boolean;
-  onAddComment?: (text: string, isAnonymous: boolean, parentId?: string | null) => void;
+  onAddComment?: (text: string, isAnonymous: boolean, customName?: string, parentId?: string | null) => void;
   onDeleteComment?: (commentId: string) => void;
   onReportComment?: (commentId: string, reason?: string) => void;
   onReactToComment?: (commentId: string, reactionType: ReactionType) => void;
@@ -42,10 +43,12 @@ export function CommentSection({
   userReactions = new Map(),
 }: CommentSectionProps) {
   const [newComment, setNewComment] = useState('');
+  const [customName, setCustomName] = useState('');
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
+  const [replyName, setReplyName] = useState('');
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
 
   // Organize comments into threads
@@ -82,8 +85,9 @@ export function CommentSection({
 
     setIsSubmitting(true);
     try {
-      onAddComment?.(newComment.trim(), isAnonymous);
+      onAddComment?.(newComment.trim(), isAnonymous, customName.trim() || undefined);
       setNewComment('');
+      setCustomName('');
     } finally {
       setIsSubmitting(false);
     }
@@ -94,8 +98,9 @@ export function CommentSection({
 
     setIsSubmitting(true);
     try {
-      onAddComment?.(replyText.trim(), isAnonymous, parentId);
+      onAddComment?.(replyText.trim(), isAnonymous, replyName.trim() || undefined, parentId);
       setReplyText('');
+      setReplyName('');
       setReplyingTo(null);
       // Auto-expand replies for the parent comment
       setExpandedReplies(prev => new Set(prev).add(parentId));
@@ -135,11 +140,13 @@ export function CommentSection({
   };
 
   const getIdentityLabel = () => {
-    if (isLoggedIn) {
-      return isAnonymous ? 'Posting as Anonymous' : 'Posting as You';
-    }
-    return isAnonymous ? 'Posting as Anonymous' : 'Posting as Guest';
+    if (isAnonymous) return 'Posting as Anonymous';
+    if (isLoggedIn) return 'Posting as You';
+    if (customName.trim()) return `Posting as ${customName.trim()}`;
+    return 'Posting as Guest';
   };
+
+  const showNameInput = !isLoggedIn && !isAnonymous;
 
   const renderComment = (comment: Comment, isReply = false, index = 0) => (
     <article
@@ -232,6 +239,17 @@ export function CommentSection({
             <User className="w-4 h-4" />
             <span>{getIdentityLabel()}</span>
           </div>
+          
+          {showNameInput && (
+            <Input
+              placeholder="Your name (optional)"
+              value={customName}
+              onChange={(e) => setCustomName(e.target.value)}
+              className="mb-2 bg-muted border-0 focus-visible:ring-1 focus-visible:ring-primary"
+              maxLength={50}
+            />
+          )}
+          
           <Textarea
             placeholder="Share your thoughts..."
             value={newComment}
@@ -296,6 +314,15 @@ export function CommentSection({
                 {/* Reply composer */}
                 {replyingTo === thread.id && (
                   <div className="ml-6 glass-card rounded-lg p-3 border-l-2 border-primary/20 animate-fade-in">
+                    {showNameInput && (
+                      <Input
+                        placeholder="Your name (optional)"
+                        value={replyName}
+                        onChange={(e) => setReplyName(e.target.value)}
+                        className="mb-2 bg-muted border-0 focus-visible:ring-1 focus-visible:ring-primary"
+                        maxLength={50}
+                      />
+                    )}
                     <Textarea
                       placeholder={`Reply to ${thread.display_name}...`}
                       value={replyText}
@@ -315,6 +342,7 @@ export function CommentSection({
                           onClick={() => {
                             setReplyingTo(null);
                             setReplyText('');
+                            setReplyName('');
                           }}
                         >
                           Cancel
