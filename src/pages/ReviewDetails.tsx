@@ -4,7 +4,6 @@ import { ArrowLeft, Calendar, Share2, Home } from 'lucide-react';
 import { useReview, useComments, useCreateComment, useDeleteComment, useReportComment, useUserReactions, useToggleCommentReaction } from '@/hooks/useReviews';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
-import { StarRating } from '@/components/StarRating';
 import { LanguageBadge } from '@/components/LanguageBadge';
 import { HelpfulButton } from '@/components/HelpfulButton';
 import { CommentSection } from '@/components/CommentSection';

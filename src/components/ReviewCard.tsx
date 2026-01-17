@@ -1,7 +1,6 @@
 import { Link } from 'react-router-dom';
 import { MessageCircle, ThumbsUp, Calendar } from 'lucide-react';
 import { Review } from '@/services/reviewService';
-import { StarRating } from './StarRating';
 import { LanguageBadge } from './LanguageBadge';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
