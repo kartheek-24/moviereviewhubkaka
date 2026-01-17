@@ -47,7 +47,7 @@ export interface User {
   updatedAt: Date;
 }
 
-export type SortOption = 'newest' | 'highest-rated' | 'most-commented' | 'most-helpful';
+export type SortOption = 'release-date' | 'newest' | 'highest-rated' | 'most-commented' | 'most-helpful';
 
 export interface AppState {
   selectedLanguage: string | null;

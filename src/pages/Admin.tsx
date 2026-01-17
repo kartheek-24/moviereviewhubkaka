@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Plus, Edit, Trash2, MessageCircle, Flag, Image, CalendarIcon, Upload, Link, X } from 'lucide-react';
+import { ArrowLeft, Plus, Edit, Trash2, MessageCircle, Flag, Image, CalendarIcon, Upload, Link, X, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Calendar } from '@/components/ui/calendar';
 import { StarRating } from '@/components/StarRating';
 import { useAuth } from '@/contexts/AuthContext';
-import { useReviews, useCreateReview, useUpdateReview, useDeleteReview, useReportedComments, useDeleteComment } from '@/hooks/useReviews';
+import { useReviews, useCreateReview, useUpdateReview, useDeleteReview, useReportedComments, useDeleteComment, useApproveComment } from '@/hooks/useReviews';
 import { Review } from '@/services/reviewService';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
@@ -111,10 +111,18 @@ const ReviewForm = ({
       </div>
 
       <div className="space-y-2">
-        <Label>Rating *</Label>
-        <div className="pt-1">
-          <StarRating rating={rating} size="md" interactive onChange={setRating} />
-        </div>
+        <Label htmlFor="rating">Rating * (1-10)</Label>
+        <Input
+          id="rating"
+          type="number"
+          min={1}
+          max={10}
+          step={0.1}
+          value={rating}
+          onChange={(e) => setRating(Math.min(10, Math.max(1, parseFloat(e.target.value) || 1)))}
+          placeholder="Rating (1-10)"
+          className="bg-muted border-0"
+        />
       </div>
     </div>
 
@@ -302,6 +310,7 @@ export default function Admin() {
   const updateReview = useUpdateReview();
   const deleteReview = useDeleteReview();
   const deleteComment = useDeleteComment();
+  const approveComment = useApproveComment();
   
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
@@ -530,6 +539,10 @@ export default function Admin() {
     deleteComment.mutate({ commentId, reviewId });
   };
 
+  const handleApproveComment = (commentId: string) => {
+    approveComment.mutate(commentId);
+  };
+
   if (authLoading) {
     return (
       <div className="min-h-screen cinema-bg flex items-center justify-center">
@@ -736,13 +749,25 @@ export default function Admin() {
                         </p>
                       </div>
                       
-                      <Button 
-                        variant="destructive" 
-                        size="sm"
-                        onClick={() => handleDeleteComment(comment.id, comment.review_id)}
-                      >
-                        Delete
-                      </Button>
+                      <div className="flex items-center gap-2 ml-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => handleApproveComment(comment.id)}
+                          className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                        >
+                          <Check className="w-4 h-4 mr-1" />
+                          Approve
+                        </Button>
+                        <Button 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => handleDeleteComment(comment.id, comment.review_id)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Delete
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}

@@ -1,4 +1,4 @@
-import { ArrowUpDown, Clock, Star, MessageCircle, ThumbsUp } from 'lucide-react';
+import { ArrowUpDown, Clock, Star, MessageCircle, ThumbsUp, CalendarDays } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { SortOption } from '@/types';
 import {
@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/select';
 
 const sortOptions: { value: SortOption; label: string; icon: React.ReactNode }[] = [
+  { value: 'release-date', label: 'Release Date', icon: <CalendarDays className="w-4 h-4" /> },
   { value: 'newest', label: 'Newest', icon: <Clock className="w-4 h-4" /> },
   { value: 'highest-rated', label: 'Highest Rated', icon: <Star className="w-4 h-4" /> },
   { value: 'most-commented', label: 'Most Commented', icon: <MessageCircle className="w-4 h-4" /> },

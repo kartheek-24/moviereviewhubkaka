@@ -7,6 +7,7 @@ import {
   createComment,
   deleteComment,
   reportComment,
+  approveComment,
   createHelpfulVote,
   checkHelpfulVote,
   createReview,
@@ -361,5 +362,29 @@ export function useReportedComments() {
   return useQuery({
     queryKey: ['reportedComments'],
     queryFn: fetchReportedComments,
+  });
+}
+
+// Hook to approve a reported comment
+export function useApproveComment() {
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
+  return useMutation({
+    mutationFn: (commentId: string) => approveComment(commentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['reportedComments'] });
+      toast({
+        title: 'Comment approved',
+        description: 'The comment has been approved and removed from moderation.',
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to approve comment.',
+        variant: 'destructive',
+      });
+    },
   });
 }

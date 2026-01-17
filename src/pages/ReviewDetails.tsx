@@ -192,7 +192,9 @@ export default function ReviewDetails() {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-4 mb-4">
-                  <StarRating rating={review.rating} size="md" />
+                  <div className="flex items-center gap-1 text-primary font-bold text-lg">
+                    <span>{review.rating}/10</span>
+                  </div>
                   {review.release_date && (
                     <span className="text-sm text-muted-foreground">
                       Released: {format(new Date(review.release_date), 'MMMM d, yyyy')}
