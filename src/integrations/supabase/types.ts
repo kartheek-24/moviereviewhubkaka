@@ -228,6 +228,36 @@ export type Database = {
         }
         Relationships: []
       }
+      pwa_install_attempts: {
+        Row: {
+          created_at: string
+          device_id: string
+          id: string
+          outcome: string
+          platform: string | null
+          source: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_id: string
+          id?: string
+          outcome: string
+          platform?: string | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_id?: string
+          id?: string
+          outcome?: string
+          platform?: string | null
+          source?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       pwa_installs: {
         Row: {
           device_id: string

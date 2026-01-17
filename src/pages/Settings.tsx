@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, User, Trash2, Shield, ExternalLink, Smartphone, Download } from 'lucide-react';
+import { ArrowLeft, Bell, User, Trash2, Shield, ExternalLink, Smartphone, Download, Check } from 'lucide-react';
 import { InstallAppGuide } from '@/components/InstallAppGuide';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -8,14 +8,20 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
+import { useApp } from '@/contexts/AppContext';
+import { usePWAInstallPrompt, trackInstallAttempt } from '@/hooks/usePWAInstall';
 
 export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
   const { user, signOut, displayName } = useAuth();
+  const { deviceId } = useApp();
+  const { canInstall, isInstalled, promptInstall } = usePWAInstallPrompt();
   
   const [pushEnabled, setPushEnabled] = useState(false);
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
+  const [isInstalling, setIsInstalling] = useState(false);
+  const [guideOpen, setGuideOpen] = useState(false);
 
   const handleTogglePush = async (enabled: boolean) => {
     if (enabled) {
@@ -55,10 +61,10 @@ export default function Settings() {
 
   const handleClearCache = () => {
     // Keep deviceId
-    const deviceId = localStorage.getItem('deviceId');
+    const savedDeviceId = localStorage.getItem('deviceId');
     localStorage.clear();
-    if (deviceId) {
-      localStorage.setItem('deviceId', deviceId);
+    if (savedDeviceId) {
+      localStorage.setItem('deviceId', savedDeviceId);
     }
     toast({
       title: 'Cache cleared',
@@ -73,6 +79,49 @@ export default function Settings() {
       description: 'You have been logged out successfully.',
     });
     navigate('/');
+  };
+
+  const handleInstallApp = async () => {
+    if (canInstall) {
+      setIsInstalling(true);
+      
+      // Track that we prompted
+      await trackInstallAttempt(deviceId, user?.id || null, 'prompted', 'settings');
+      
+      try {
+        const accepted = await promptInstall();
+        
+        // Track the outcome
+        await trackInstallAttempt(
+          deviceId, 
+          user?.id || null, 
+          accepted ? 'accepted' : 'dismissed', 
+          'settings'
+        );
+        
+        if (accepted) {
+          toast({
+            title: 'Installing...',
+            description: 'The app is being installed on your device.',
+          });
+        } else {
+          toast({
+            title: 'Installation cancelled',
+            description: 'You can install the app anytime.',
+          });
+        }
+      } catch (error) {
+        console.error('Install error:', error);
+        await trackInstallAttempt(deviceId, user?.id || null, 'fallback', 'settings');
+        setGuideOpen(true);
+      } finally {
+        setIsInstalling(false);
+      }
+    } else {
+      // Fallback: Show manual installation guide
+      await trackInstallAttempt(deviceId, user?.id || null, 'fallback', 'settings');
+      setGuideOpen(true);
+    }
   };
 
   return (
@@ -191,21 +240,39 @@ export default function Settings() {
           <div className="glass-card rounded-xl p-4">
             <div className="flex items-start gap-4">
               <div className="flex-shrink-0 w-12 h-12 bg-primary/20 rounded-xl flex items-center justify-center">
-                <Smartphone className="w-6 h-6 text-primary" />
+                {isInstalled ? (
+                  <Check className="w-6 h-6 text-green-500" />
+                ) : (
+                  <Smartphone className="w-6 h-6 text-primary" />
+                )}
               </div>
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-foreground mb-1">Add to Home Screen</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Install this app on your phone for quick access and a native app experience.
-                </p>
-                <InstallAppGuide
-                  trigger={
-                    <Button variant="outline" size="sm" className="w-full sm:w-auto">
-                      <Download className="w-4 h-4 mr-2" />
-                      See How to Install
-                    </Button>
-                  }
-                />
+                {isInstalled ? (
+                  <>
+                    <h3 className="font-semibold text-foreground mb-1">App Installed</h3>
+                    <p className="text-sm text-green-500">
+                      You're using the installed app version. Enjoy the native experience!
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h3 className="font-semibold text-foreground mb-1">Add to Home Screen</h3>
+                    <p className="text-sm text-muted-foreground mb-3">
+                      Install this app on your device for quick access and a native app experience.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-2">
+                      <Button 
+                        onClick={handleInstallApp}
+                        disabled={isInstalling}
+                        size="sm" 
+                        className="w-full sm:w-auto bg-primary text-primary-foreground hover:bg-primary/90"
+                      >
+                        <Download className={`w-4 h-4 mr-2 ${isInstalling ? 'animate-pulse' : ''}`} />
+                        {isInstalling ? 'Installing...' : canInstall ? 'Install Now' : 'See How to Install'}
+                      </Button>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -246,6 +313,8 @@ export default function Settings() {
           <p className="text-xs mt-1">Version 1.0.0</p>
         </div>
       </main>
+
+      <InstallAppGuide open={guideOpen} onOpenChange={setGuideOpen} />
     </div>
   );
 }

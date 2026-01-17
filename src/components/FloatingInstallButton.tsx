@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { Download, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { InstallAppGuide } from './InstallAppGuide';
-import { usePWAInstallPrompt } from '@/hooks/usePWAInstall';
+import { usePWAInstallPrompt, trackInstallAttempt } from '@/hooks/usePWAInstall';
 import { useToast } from '@/hooks/use-toast';
+import { useApp } from '@/contexts/AppContext';
+import { useAuth } from '@/contexts/AuthContext';
 
 const STORAGE_KEY = 'pwa_install_dismissed';
 const DISMISS_DURATION_DAYS = 7;
@@ -14,6 +16,8 @@ export function FloatingInstallButton() {
   const [isInstalling, setIsInstalling] = useState(false);
   const { canInstall, isInstalled, promptInstall } = usePWAInstallPrompt();
   const { toast } = useToast();
+  const { deviceId } = useApp();
+  const { user } = useAuth();
 
   useEffect(() => {
     // Hide if already installed
@@ -53,8 +57,21 @@ export function FloatingInstallButton() {
     // If native install prompt is available, use it
     if (canInstall) {
       setIsInstalling(true);
+      
+      // Track that we prompted
+      await trackInstallAttempt(deviceId, user?.id || null, 'prompted', 'floating_button');
+      
       try {
         const accepted = await promptInstall();
+        
+        // Track the outcome
+        await trackInstallAttempt(
+          deviceId, 
+          user?.id || null, 
+          accepted ? 'accepted' : 'dismissed', 
+          'floating_button'
+        );
+        
         if (accepted) {
           toast({
             title: 'Installing...',
@@ -64,18 +81,20 @@ export function FloatingInstallButton() {
         } else {
           toast({
             title: 'Installation cancelled',
-            description: 'You can install the app anytime from the menu.',
+            description: 'You can install the app anytime from Settings.',
           });
         }
       } catch (error) {
         console.error('Install error:', error);
         // Fallback to guide if something goes wrong
+        await trackInstallAttempt(deviceId, user?.id || null, 'fallback', 'floating_button');
         setGuideOpen(true);
       } finally {
         setIsInstalling(false);
       }
     } else {
       // Fallback: Show manual installation guide (for iOS Safari, etc.)
+      await trackInstallAttempt(deviceId, user?.id || null, 'fallback', 'floating_button');
       setGuideOpen(true);
     }
   };

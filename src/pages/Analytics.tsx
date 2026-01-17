@@ -1,8 +1,8 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3, Eye, MousePointerClick, Clock, Smartphone, Monitor, Download } from 'lucide-react';
+import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3, Eye, MousePointerClick, Clock, Smartphone, Monitor, Download, Target, CheckCircle, XCircle } from 'lucide-react';
 import { useReviews, useLanguages } from '@/hooks/useReviews';
-import { usePWAInstallCount, usePWAInstallsByPlatform } from '@/hooks/usePWAInstall';
+import { usePWAInstallCount, usePWAInstallsByPlatform, useInstallAttemptStats } from '@/hooks/usePWAInstall';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -63,6 +63,7 @@ export default function Analytics() {
   const { data: languages = [] } = useLanguages();
   const { count: pwaInstallCount, isLoading: pwaLoading } = usePWAInstallCount();
   const { data: pwaByPlatform, isLoading: pwaByPlatformLoading } = usePWAInstallsByPlatform();
+  const { stats: installAttemptStats, isLoading: installStatsLoading } = useInstallAttemptStats();
   const [activeTab, setActiveTab] = useState('visitors');
 
   // Calculate stats
@@ -464,6 +465,58 @@ export default function Analytics() {
                             </div>
                           </div>
                         </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Install Conversion Stats */}
+                    <Card className="bg-card/50 border-border/50">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Target className="w-5 h-5 text-primary" />
+                          Install Conversion
+                        </CardTitle>
+                        <CardDescription>PWA install prompt success rate</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        {installStatsLoading ? (
+                          <div className="animate-pulse space-y-3">
+                            <div className="h-16 skeleton-shimmer rounded" />
+                            <div className="h-4 w-3/4 skeleton-shimmer rounded" />
+                          </div>
+                        ) : installAttemptStats ? (
+                          <div className="space-y-4">
+                            <div className="text-center">
+                              <p className="text-4xl font-bold text-primary">
+                                {installAttemptStats.conversionRate.toFixed(1)}%
+                              </p>
+                              <p className="text-sm text-muted-foreground">Conversion Rate</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-3 pt-2">
+                              <div className="flex items-center gap-2 p-2 rounded-lg bg-green-500/10">
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                                <div>
+                                  <p className="text-lg font-semibold text-foreground">{installAttemptStats.totalAccepted}</p>
+                                  <p className="text-xs text-muted-foreground">Accepted</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2 p-2 rounded-lg bg-red-500/10">
+                                <XCircle className="w-4 h-4 text-red-500" />
+                                <div>
+                                  <p className="text-lg font-semibold text-foreground">{installAttemptStats.totalDismissed}</p>
+                                  <p className="text-xs text-muted-foreground">Dismissed</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="flex justify-between text-xs text-muted-foreground pt-2 border-t border-border/50">
+                              <span>Total Prompts: {installAttemptStats.totalPrompted}</span>
+                              <span>Fallbacks: {installAttemptStats.totalFallback}</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="text-center text-muted-foreground py-4">
+                            <p>No install data yet</p>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
 
