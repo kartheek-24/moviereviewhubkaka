@@ -264,13 +264,35 @@ export function CommentSection({
           </div>
           
           {showNameInput && (
-            <Input
-              placeholder="Your name (optional)"
-              value={customName}
-              onChange={(e) => setCustomName(e.target.value)}
-              className="mb-2 bg-muted border-0 focus-visible:ring-1 focus-visible:ring-primary"
-              maxLength={50}
-            />
+            <div className="mb-2">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Your name (optional)"
+                  value={customName}
+                  onChange={(e) => setCustomName(e.target.value)}
+                  className="flex-1 bg-muted border-0 focus-visible:ring-1 focus-visible:ring-primary"
+                  maxLength={50}
+                />
+                {customName && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setCustomName('');
+                      localStorage.removeItem('guestCommentName');
+                    }}
+                    className="text-muted-foreground hover:text-destructive px-2"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+              <div className="flex justify-end mt-1">
+                <span className="text-xs text-muted-foreground">
+                  {customName.length}/50
+                </span>
+              </div>
+            </div>
           )}
           
           <Textarea
@@ -338,13 +360,35 @@ export function CommentSection({
                 {replyingTo === thread.id && (
                   <div className="ml-6 glass-card rounded-lg p-3 border-l-2 border-primary/20 animate-fade-in">
                     {showNameInput && (
-                      <Input
-                        placeholder="Your name (optional)"
-                        value={replyName}
-                        onChange={(e) => setReplyName(e.target.value)}
-                        className="mb-2 bg-muted border-0 focus-visible:ring-1 focus-visible:ring-primary"
-                        maxLength={50}
-                      />
+                      <div className="mb-2">
+                        <div className="flex gap-2">
+                          <Input
+                            placeholder="Your name (optional)"
+                            value={replyName}
+                            onChange={(e) => setReplyName(e.target.value)}
+                            className="flex-1 bg-muted border-0 focus-visible:ring-1 focus-visible:ring-primary"
+                            maxLength={50}
+                          />
+                          {replyName && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setReplyName('');
+                                localStorage.removeItem('guestCommentName');
+                              }}
+                              className="text-muted-foreground hover:text-destructive px-2"
+                            >
+                              Clear
+                            </Button>
+                          )}
+                        </div>
+                        <div className="flex justify-end mt-1">
+                          <span className="text-xs text-muted-foreground">
+                            {replyName.length}/50
+                          </span>
+                        </div>
+                      </div>
                     )}
                     <Textarea
                       placeholder={`Reply to ${thread.display_name}...`}
