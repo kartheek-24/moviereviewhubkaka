@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Send, Flag, Trash2, User, Reply, ChevronDown, ChevronUp } from 'lucide-react';
 import { Comment, ReactionType } from '@/services/reviewService';
 import { Button } from '@/components/ui/button';
@@ -43,13 +43,36 @@ export function CommentSection({
   userReactions = new Map(),
 }: CommentSectionProps) {
   const [newComment, setNewComment] = useState('');
-  const [customName, setCustomName] = useState('');
+  const [customName, setCustomName] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('guestCommentName') || '';
+    }
+    return '';
+  });
   const [isAnonymous, setIsAnonymous] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyText, setReplyText] = useState('');
-  const [replyName, setReplyName] = useState('');
+  const [replyName, setReplyName] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('guestCommentName') || '';
+    }
+    return '';
+  });
   const [expandedReplies, setExpandedReplies] = useState<Set<string>>(new Set());
+
+  // Persist custom name to localStorage
+  useEffect(() => {
+    if (customName.trim()) {
+      localStorage.setItem('guestCommentName', customName.trim());
+    }
+  }, [customName]);
+
+  useEffect(() => {
+    if (replyName.trim()) {
+      localStorage.setItem('guestCommentName', replyName.trim());
+    }
+  }, [replyName]);
 
   // Organize comments into threads
   const commentThreads = useMemo(() => {
