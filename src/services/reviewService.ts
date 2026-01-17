@@ -228,6 +228,19 @@ export async function toggleCommentReaction(
   return { action: 'added' as const, reactionType };
 }
 
+// Update a comment
+export async function updateComment(commentId: string, text: string) {
+  const { data, error } = await supabase
+    .from('comments')
+    .update({ text })
+    .eq('id', commentId)
+    .select()
+    .single();
+
+  if (error) throw error;
+  return data as Comment;
+}
+
 // Delete a comment
 export async function deleteComment(commentId: string) {
   const { error } = await supabase
