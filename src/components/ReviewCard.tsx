@@ -45,7 +45,9 @@ export function ReviewCard({ review, className }: ReviewCardProps) {
             
             {/* Rating & Date */}
             <div className="flex items-center gap-3 mb-2">
-              <StarRating rating={review.rating} size="sm" />
+              <div className="flex items-center gap-1 text-primary font-semibold">
+                <span className="text-sm">{review.rating}/10</span>
+              </div>
               {review.release_date && (
                 <span className="text-xs text-muted-foreground">
                   {format(new Date(review.release_date), 'MMM d, yyyy')}

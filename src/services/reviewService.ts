@@ -75,6 +75,9 @@ export async function fetchReviews(options?: {
 
   // Sort
   switch (options?.sortBy) {
+    case 'release-date':
+      query = query.order('release_date', { ascending: false, nullsFirst: false });
+      break;
     case 'highest-rated':
       query = query.order('rating', { ascending: false });
       break;
@@ -375,6 +378,16 @@ export async function fetchReportedComments() {
 
   if (error) throw error;
   return data;
+}
+
+// Approve a reported comment (admin only) - clears reported flag
+export async function approveComment(commentId: string) {
+  const { error } = await supabase
+    .from('comments')
+    .update({ reported: false, reported_reason: null })
+    .eq('id', commentId);
+
+  if (error) throw error;
 }
 
 // Register device for push notifications using secure RPC
