@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3, Eye, MousePointerClick, Clock, Smartphone, Monitor, Download, Target, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3, Eye, MousePointerClick, Clock, Smartphone, Monitor, Download, Target, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
 import { useReviews, useLanguages } from '@/hooks/useReviews';
 import { usePWAInstallCount, usePWAInstallsByPlatform, useInstallAttemptStats } from '@/hooks/usePWAInstall';
+import { useAnalytics } from '@/hooks/useAnalytics';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -38,25 +39,6 @@ const CHART_COLORS = [
   'hsl(180, 50%, 45%)',  // Cyan
 ];
 
-// Mock visitor analytics data (in a real app, this would come from an analytics service)
-const visitorAnalytics = {
-  totalVisitors: 444,
-  totalPageviews: 1273,
-  avgPageviewsPerVisit: 2.87,
-  avgSessionDuration: 100, // seconds
-  bounceRate: 52,
-  visitorsTimeline: [
-    { date: 'Jan 11', visitors: 10, pageviews: 26 },
-    { date: 'Jan 12', visitors: 96, pageviews: 363 },
-    { date: 'Jan 13', visitors: 256, pageviews: 688 },
-    { date: 'Jan 14', visitors: 82, pageviews: 196 },
-  ],
-  deviceTypes: [
-    { device: 'Mobile', visitors: 434, fill: 'hsl(38, 92%, 50%)' },
-    { device: 'Desktop', visitors: 10, fill: 'hsl(220, 70%, 50%)' },
-  ],
-};
-
 export default function Analytics() {
   const navigate = useNavigate();
   const { data: reviews = [], isLoading } = useReviews();
@@ -64,7 +46,21 @@ export default function Analytics() {
   const { count: pwaInstallCount, isLoading: pwaLoading } = usePWAInstallCount();
   const { data: pwaByPlatform, isLoading: pwaByPlatformLoading } = usePWAInstallsByPlatform();
   const { stats: installAttemptStats, isLoading: installStatsLoading } = useInstallAttemptStats();
+  const { data: visitorAnalytics, isLoading: analyticsLoading, refetch: refetchAnalytics } = useAnalytics(30);
   const [activeTab, setActiveTab] = useState('visitors');
+
+  // Default analytics data while loading
+  const defaultAnalytics = {
+    totalVisitors: 0,
+    totalPageviews: 0,
+    avgPageviewsPerVisit: 0,
+    avgSessionDuration: 0,
+    bounceRate: 0,
+    visitorsTimeline: [],
+    deviceTypes: [],
+  };
+
+  const analytics = visitorAnalytics || defaultAnalytics;
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -147,17 +143,17 @@ export default function Analytics() {
   // Engagement rate calculation
   const engagementRate = useMemo(() => {
     const totalInteractions = stats.totalComments + stats.totalHelpful;
-    const rate = visitorAnalytics.totalVisitors > 0 
-      ? ((totalInteractions / visitorAnalytics.totalVisitors) * 100).toFixed(1)
+    const rate = analytics.totalVisitors > 0 
+      ? ((totalInteractions / analytics.totalVisitors) * 100).toFixed(1)
       : '0';
     return rate;
-  }, [stats]);
+  }, [stats, analytics.totalVisitors]);
 
   // Radial data for engagement overview
-  const engagementRadialData = [
-    { name: 'Bounce Rate', value: visitorAnalytics.bounceRate, fill: 'hsl(340, 65%, 50%)' },
-    { name: 'Engagement', value: 100 - visitorAnalytics.bounceRate, fill: 'hsl(160, 60%, 45%)' },
-  ];
+  const engagementRadialData = useMemo(() => [
+    { name: 'Bounce Rate', value: analytics.bounceRate, fill: 'hsl(340, 65%, 50%)' },
+    { name: 'Engagement', value: 100 - analytics.bounceRate, fill: 'hsl(160, 60%, 45%)' },
+  ], [analytics.bounceRate]);
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -207,7 +203,7 @@ export default function Analytics() {
 
       <ScrollArea className="h-[calc(100vh-3.5rem)]">
         <main className="container px-4 py-6 pb-20">
-          {isLoading ? (
+          {isLoading || analyticsLoading ? (
             <div className="animate-pulse space-y-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {[1, 2, 3, 4].map(i => (
@@ -233,6 +229,28 @@ export default function Analytics() {
 
                 {/* Visitors Tab */}
                 <TabsContent value="visitors" className="space-y-6">
+                  {/* Real Data Badge */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+                      <span>Live data from published app</span>
+                      {visitorAnalytics?.lastUpdated && (
+                        <span className="text-xs">
+                          • Updated {format(new Date(visitorAnalytics.lastUpdated), 'MMM d, h:mm a')}
+                        </span>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => refetchAnalytics()}
+                      className="text-muted-foreground hover:text-foreground"
+                    >
+                      <RefreshCw className="w-4 h-4 mr-1" />
+                      Refresh
+                    </Button>
+                  </div>
+
                   {/* Visitor Stats Cards */}
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                     <Card className="bg-gradient-to-br from-primary/20 to-primary/5 border-primary/30">
@@ -242,7 +260,7 @@ export default function Analytics() {
                             <Users className="w-6 h-6 text-primary" />
                           </div>
                           <div>
-                            <p className="text-3xl font-bold text-foreground">{visitorAnalytics.totalVisitors}</p>
+                            <p className="text-3xl font-bold text-foreground">{analytics.totalVisitors.toLocaleString()}</p>
                             <p className="text-xs text-muted-foreground">Total Visitors</p>
                           </div>
                         </div>
@@ -256,7 +274,7 @@ export default function Analytics() {
                             <Eye className="w-6 h-6 text-blue-500" />
                           </div>
                           <div>
-                            <p className="text-3xl font-bold text-foreground">{visitorAnalytics.totalPageviews}</p>
+                            <p className="text-3xl font-bold text-foreground">{analytics.totalPageviews.toLocaleString()}</p>
                             <p className="text-xs text-muted-foreground">Page Views</p>
                           </div>
                         </div>
@@ -270,7 +288,7 @@ export default function Analytics() {
                             <Clock className="w-6 h-6 text-green-500" />
                           </div>
                           <div>
-                            <p className="text-3xl font-bold text-foreground">{formatDuration(visitorAnalytics.avgSessionDuration)}</p>
+                            <p className="text-3xl font-bold text-foreground">{formatDuration(analytics.avgSessionDuration)}</p>
                             <p className="text-xs text-muted-foreground">Avg Session</p>
                           </div>
                         </div>
@@ -284,7 +302,7 @@ export default function Analytics() {
                             <MousePointerClick className="w-6 h-6 text-purple-500" />
                           </div>
                           <div>
-                            <p className="text-3xl font-bold text-foreground">{visitorAnalytics.avgPageviewsPerVisit}</p>
+                            <p className="text-3xl font-bold text-foreground">{analytics.avgPageviewsPerVisit.toFixed(2)}</p>
                             <p className="text-xs text-muted-foreground">Pages/Visit</p>
                           </div>
                         </div>
@@ -320,7 +338,7 @@ export default function Analytics() {
                     <CardContent>
                       <div className="h-72">
                         <ResponsiveContainer width="100%" height="100%">
-                          <AreaChart data={visitorAnalytics.visitorsTimeline}>
+                          <AreaChart data={analytics.visitorsTimeline}>
                             <defs>
                               <linearGradient id="colorVisitors" x1="0" y1="0" x2="0" y2="1">
                                 <stop offset="5%" stopColor="hsl(38, 92%, 50%)" stopOpacity={0.4}/>
@@ -381,7 +399,7 @@ export default function Analytics() {
                           <ResponsiveContainer width="100%" height="100%">
                             <PieChart>
                               <Pie
-                                data={visitorAnalytics.deviceTypes}
+                                data={analytics.deviceTypes}
                                 cx="50%"
                                 cy="50%"
                                 innerRadius={40}
@@ -389,7 +407,7 @@ export default function Analytics() {
                                 paddingAngle={4}
                                 dataKey="visitors"
                               >
-                                {visitorAnalytics.deviceTypes.map((entry, index) => (
+                                {analytics.deviceTypes.map((entry, index) => (
                                   <Cell key={`cell-${index}`} fill={entry.fill} />
                                 ))}
                               </Pie>
@@ -398,7 +416,7 @@ export default function Analytics() {
                           </ResponsiveContainer>
                         </div>
                         <div className="flex justify-center gap-6 mt-2">
-                          {visitorAnalytics.deviceTypes.map((device, i) => (
+                          {analytics.deviceTypes.map((device, i) => (
                             <div key={i} className="flex items-center gap-2">
                               {device.device === 'Mobile' ? 
                                 <Smartphone className="w-4 h-4" style={{ color: device.fill }} /> :
@@ -544,7 +562,7 @@ export default function Analytics() {
                               <circle
                                 className="text-primary"
                                 strokeWidth="8"
-                                strokeDasharray={`${(100 - visitorAnalytics.bounceRate) * 3.27} 327`}
+                                strokeDasharray={`${(100 - analytics.bounceRate) * 3.27} 327`}
                                 strokeLinecap="round"
                                 stroke="currentColor"
                                 fill="transparent"
@@ -554,10 +572,10 @@ export default function Analytics() {
                                 style={{ transform: 'rotate(-90deg)', transformOrigin: '64px 64px' }}
                               />
                             </svg>
-                            <span className="absolute text-2xl font-bold">{100 - visitorAnalytics.bounceRate}%</span>
+                            <span className="absolute text-2xl font-bold">{100 - analytics.bounceRate}%</span>
                           </div>
                           <p className="text-sm text-muted-foreground mt-2">Engaged Visitors</p>
-                          <p className="text-xs text-muted-foreground">(Bounce rate: {visitorAnalytics.bounceRate}%)</p>
+                          <p className="text-xs text-muted-foreground">(Bounce rate: {analytics.bounceRate}%)</p>
                         </div>
                       </CardContent>
                     </Card>
