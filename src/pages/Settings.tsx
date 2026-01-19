@@ -1,7 +1,9 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell, User, Trash2, Shield, ExternalLink, Smartphone, Download, Check } from 'lucide-react';
+import { Capacitor } from '@capacitor/core';
 import { InstallAppGuide } from '@/components/InstallAppGuide';
+import { PushNotificationSetup } from '@/components/PushNotificationSetup';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -17,6 +19,7 @@ export default function Settings() {
   const { user, signOut, displayName } = useAuth();
   const { deviceId } = useApp();
   const { canInstall, isInstalled, promptInstall } = usePWAInstallPrompt();
+  const isNative = Capacitor.isNativePlatform();
   
   const [pushEnabled, setPushEnabled] = useState(false);
   const [isRequestingPermission, setIsRequestingPermission] = useState(false);
@@ -150,36 +153,47 @@ export default function Settings() {
             <Bell className="w-4 h-4" />
             Notifications
           </h2>
-          <div className="glass-card rounded-xl p-4 space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <Label htmlFor="push" className="text-foreground font-medium">
-                  Push Notifications
-                </Label>
-                <p className="text-sm text-muted-foreground">
-                  Get notified when new reviews are posted
-                </p>
-              </div>
-              <Switch
-                id="push"
-                checked={pushEnabled}
-                onCheckedChange={handleTogglePush}
-                disabled={isRequestingPermission}
-              />
+          
+          {/* Native Push Notifications (only shown on native apps) */}
+          {isNative && (
+            <div className="mb-4">
+              <PushNotificationSetup />
             </div>
-            
-            {!pushEnabled && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => handleTogglePush(true)}
-                disabled={isRequestingPermission}
-                className="w-full"
-              >
-                {isRequestingPermission ? 'Requesting...' : 'Request Permission'}
-              </Button>
-            )}
-          </div>
+          )}
+          
+          {/* Web Push Notifications */}
+          {!isNative && (
+            <div className="glass-card rounded-xl p-4 space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <Label htmlFor="push" className="text-foreground font-medium">
+                    Push Notifications
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    Get notified when new reviews are posted
+                  </p>
+                </div>
+                <Switch
+                  id="push"
+                  checked={pushEnabled}
+                  onCheckedChange={handleTogglePush}
+                  disabled={isRequestingPermission}
+                />
+              </div>
+              
+              {!pushEnabled && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleTogglePush(true)}
+                  disabled={isRequestingPermission}
+                  className="w-full"
+                >
+                  {isRequestingPermission ? 'Requesting...' : 'Request Permission'}
+                </Button>
+              )}
+            </div>
+          )}
         </section>
 
         {/* Account Section */}
