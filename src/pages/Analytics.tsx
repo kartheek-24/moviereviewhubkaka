@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3, Eye, MousePointerClick, Clock, Smartphone, Monitor, Download, Target, CheckCircle, XCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3, Eye, MousePointerClick, Clock, Smartphone, Monitor, Download, Target, CheckCircle, XCircle, RefreshCw, Globe } from 'lucide-react';
 import { useReviews, useLanguages } from '@/hooks/useReviews';
 import { usePWAInstallCount, usePWAInstallsByPlatform, useInstallAttemptStats } from '@/hooks/usePWAInstall';
 import { useAnalytics } from '@/hooks/useAnalytics';
@@ -58,6 +58,9 @@ export default function Analytics() {
     bounceRate: 0,
     visitorsTimeline: [],
     deviceTypes: [],
+    countries: [],
+    topPages: [],
+    sources: [],
   };
 
   const analytics = visitorAnalytics || defaultAnalytics;
@@ -581,7 +584,7 @@ export default function Analytics() {
                     </Card>
                   </div>
 
-                  {/* Top Pages and Countries */}
+                  {/* Top Reviews and Countries */}
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* Top Reviews by Engagement */}
                     <Card className="bg-card/50 border-border/50">
@@ -621,6 +624,60 @@ export default function Analytics() {
                                   radius={[0, 4, 4, 0]}
                                   name="Engagement"
                                 />
+                              </BarChart>
+                            </ResponsiveContainer>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Country Breakdown */}
+                    <Card className="bg-card/50 border-border/50">
+                      <CardHeader>
+                        <CardTitle className="text-lg flex items-center gap-2">
+                          <Globe className="w-5 h-5 text-primary" />
+                          Visitors by Country
+                        </CardTitle>
+                        <CardDescription>Geographic distribution of visitors</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="h-64">
+                          {(!analytics.countries || analytics.countries.length === 0) ? (
+                            <div className="h-full flex items-center justify-center">
+                              <p className="text-muted-foreground text-sm">No country data yet</p>
+                            </div>
+                          ) : (
+                            <ResponsiveContainer width="100%" height="100%">
+                              <BarChart 
+                                data={analytics.countries.map((c, i) => ({
+                                  ...c,
+                                  fill: CHART_COLORS[i % CHART_COLORS.length]
+                                }))} 
+                                layout="vertical"
+                              >
+                                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 15%, 25%)" />
+                                <XAxis 
+                                  type="number"
+                                  tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
+                                  tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
+                                />
+                                <YAxis 
+                                  type="category"
+                                  dataKey="country"
+                                  tick={{ fill: 'hsl(220, 10%, 55%)', fontSize: 11 }}
+                                  tickLine={{ stroke: 'hsl(220, 15%, 25%)' }}
+                                  width={50}
+                                />
+                                <Tooltip content={<CustomTooltip />} />
+                                <Bar 
+                                  dataKey="visitors" 
+                                  radius={[0, 4, 4, 0]}
+                                  name="Visitors"
+                                >
+                                  {analytics.countries.map((entry, index) => (
+                                    <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                                  ))}
+                                </Bar>
                               </BarChart>
                             </ResponsiveContainer>
                           )}
