@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { 
   X, 
-  Globe, 
   Settings, 
   Shield, 
   LogIn, 
@@ -13,7 +12,6 @@ import {
 } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { useLanguages } from '@/hooks/useReviews';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
@@ -21,9 +19,8 @@ import { cn } from '@/lib/utils';
 
 export function Drawer() {
   const location = useLocation();
-  const { isDrawerOpen, setIsDrawerOpen, selectedLanguage, setSelectedLanguage } = useApp();
+  const { isDrawerOpen, setIsDrawerOpen } = useApp();
   const { user, isAdmin, signOut, displayName } = useAuth();
-  const { data: languages = [] } = useLanguages();
 
   // Close drawer on route change
   useEffect(() => {
@@ -50,11 +47,6 @@ export function Drawer() {
       document.body.style.overflow = '';
     };
   }, [isDrawerOpen]);
-
-  const handleLanguageSelect = (language: string | null) => {
-    setSelectedLanguage(language);
-    setIsDrawerOpen(false);
-  };
 
   const handleLogout = async () => {
     await signOut();
@@ -104,49 +96,6 @@ export function Drawer() {
           {/* Content */}
           <ScrollArea className="flex-1">
             <nav className="p-3">
-              {/* Languages Section */}
-              <div className="mb-4">
-                <h3 className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
-                  Languages
-                </h3>
-                <ul className="space-y-1">
-                  <li>
-                    <button
-                      onClick={() => handleLanguageSelect(null)}
-                      className={cn(
-                        'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
-                        selectedLanguage === null
-                          ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                          : 'text-sidebar-foreground hover:bg-sidebar-accent'
-                      )}
-                    >
-                      <Globe className="w-4 h-4" />
-                      All Languages
-                    </button>
-                  </li>
-                  {languages.map((lang) => (
-                    <li key={lang}>
-                      <button
-                        onClick={() => handleLanguageSelect(lang)}
-                        className={cn(
-                          'w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm transition-colors',
-                          selectedLanguage === lang
-                            ? 'bg-sidebar-primary text-sidebar-primary-foreground'
-                            : 'text-sidebar-foreground hover:bg-sidebar-accent'
-                        )}
-                      >
-                        <span className="w-4 h-4 flex items-center justify-center text-xs font-medium">
-                          {lang.charAt(0)}
-                        </span>
-                        {lang}
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              
-              <Separator className="my-3 bg-sidebar-border" />
-              
               {/* Navigation Section */}
               <div className="mb-4">
                 <h3 className="px-3 py-2 text-xs font-semibold text-sidebar-foreground/60 uppercase tracking-wider">
