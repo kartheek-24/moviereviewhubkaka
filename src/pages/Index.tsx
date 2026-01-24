@@ -1,5 +1,5 @@
 import { useApp } from '@/contexts/AppContext';
-import { useReviews, useLanguages } from '@/hooks/useReviews';
+import { useReviews } from '@/hooks/useReviews';
 import { useRealtimeReviews } from '@/hooks/useRealtimeReviews';
 import { Header } from '@/components/Header';
 import { Drawer } from '@/components/Drawer';
@@ -8,15 +8,8 @@ import { ReviewCardSkeleton } from '@/components/ReviewCardSkeleton';
 import { SortDropdown } from '@/components/SortDropdown';
 import { EmptyState } from '@/components/EmptyState';
 import { LanguageBadge } from '@/components/LanguageBadge';
-import { X, Globe } from 'lucide-react';
+import { X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 
 export default function Index() {
   const { selectedLanguage, setSelectedLanguage, sortBy, searchQuery } = useApp();
@@ -29,8 +22,6 @@ export default function Index() {
     searchQuery,
     sortBy,
   });
-
-  const { data: languages = [] } = useLanguages();
 
   return (
     <div className="min-h-screen cinema-bg">
@@ -64,28 +55,7 @@ export default function Index() {
           </div>
 
           {/* Right side - Filter options */}
-          <div className="flex items-center gap-2">
-            {/* Language Filter */}
-            <Select 
-              value={selectedLanguage || "all"} 
-              onValueChange={(value) => setSelectedLanguage(value === "all" ? null : value)}
-            >
-              <SelectTrigger className="w-[140px] h-9 bg-secondary border-0 focus:ring-1 focus:ring-primary">
-                <Globe className="w-4 h-4 mr-2 text-muted-foreground" />
-                <SelectValue placeholder="All Languages" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border">
-                <SelectItem value="all">All Languages</SelectItem>
-                {languages.map((lang) => (
-                  <SelectItem key={lang} value={lang}>
-                    {lang}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <SortDropdown />
-          </div>
+          <SortDropdown />
         </div>
 
         {/* Reviews List */}
