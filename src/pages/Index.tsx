@@ -84,21 +84,6 @@ export default function Index() {
               </SelectContent>
             </Select>
 
-            {/* Actual Language Filter - shows when a language is selected */}
-            {selectedLanguage && (
-              <Select defaultValue="all">
-                <SelectTrigger className="w-[160px] h-9 bg-secondary border-0 focus:ring-1 focus:ring-primary animate-fade-in">
-                  <SelectValue placeholder="Actual Language" />
-                </SelectTrigger>
-                <SelectContent className="bg-popover border-border">
-                  <SelectItem value="all">All Dialects</SelectItem>
-                  <SelectItem value="original">Original</SelectItem>
-                  <SelectItem value="dubbed">Dubbed</SelectItem>
-                  <SelectItem value="subtitled">Subtitled</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-
             <SortDropdown />
           </div>
         </div>
