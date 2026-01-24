@@ -40,26 +40,8 @@ export default function Index() {
       <main className="container px-4 py-4 pb-20">
         {/* Filter Bar */}
         <div className="flex items-center justify-between mb-4 gap-2">
+          {/* Left side - Active filters and search results */}
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Language Filter */}
-            <Select 
-              value={selectedLanguage || "all"} 
-              onValueChange={(value) => setSelectedLanguage(value === "all" ? null : value)}
-            >
-              <SelectTrigger className="w-[140px] h-9 bg-secondary border-0 focus:ring-1 focus:ring-primary">
-                <Globe className="w-4 h-4 mr-2 text-muted-foreground" />
-                <SelectValue placeholder="All Languages" />
-              </SelectTrigger>
-              <SelectContent className="bg-popover border-border">
-                <SelectItem value="all">All Languages</SelectItem>
-                {languages.map((lang) => (
-                  <SelectItem key={lang} value={lang}>
-                    {lang}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
             {/* Active Filter Badges */}
             {selectedLanguage && (
               <div className="flex items-center gap-1 animate-fade-in">
@@ -80,7 +62,45 @@ export default function Index() {
               </span>
             )}
           </div>
-          <SortDropdown />
+
+          {/* Right side - Filter options */}
+          <div className="flex items-center gap-2">
+            {/* Language Filter */}
+            <Select 
+              value={selectedLanguage || "all"} 
+              onValueChange={(value) => setSelectedLanguage(value === "all" ? null : value)}
+            >
+              <SelectTrigger className="w-[140px] h-9 bg-secondary border-0 focus:ring-1 focus:ring-primary">
+                <Globe className="w-4 h-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="All Languages" />
+              </SelectTrigger>
+              <SelectContent className="bg-popover border-border">
+                <SelectItem value="all">All Languages</SelectItem>
+                {languages.map((lang) => (
+                  <SelectItem key={lang} value={lang}>
+                    {lang}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Actual Language Filter - shows when a language is selected */}
+            {selectedLanguage && (
+              <Select defaultValue="all">
+                <SelectTrigger className="w-[160px] h-9 bg-secondary border-0 focus:ring-1 focus:ring-primary animate-fade-in">
+                  <SelectValue placeholder="Actual Language" />
+                </SelectTrigger>
+                <SelectContent className="bg-popover border-border">
+                  <SelectItem value="all">All Dialects</SelectItem>
+                  <SelectItem value="original">Original</SelectItem>
+                  <SelectItem value="dubbed">Dubbed</SelectItem>
+                  <SelectItem value="subtitled">Subtitled</SelectItem>
+                </SelectContent>
+              </Select>
+            )}
+
+            <SortDropdown />
+          </div>
         </div>
 
         {/* Reviews List */}
