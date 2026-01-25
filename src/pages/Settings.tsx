@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Bell, User, Trash2, Shield, ExternalLink, Smartphone, Download, Check, Film, MessageSquare } from 'lucide-react';
-import { Capacitor } from '@capacitor/core';
 import { InstallAppGuide } from '@/components/InstallAppGuide';
-import { PushNotificationSetup } from '@/components/PushNotificationSetup';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -21,48 +19,10 @@ export default function Settings() {
   const { deviceId } = useApp();
   const { canInstall, isInstalled, promptInstall } = usePWAInstallPrompt();
   const { preferences, updatePreference } = useNotificationPreferences();
-  const isNative = Capacitor.isNativePlatform();
   
-  const [pushEnabled, setPushEnabled] = useState(false);
-  const [isRequestingPermission, setIsRequestingPermission] = useState(false);
   const [isInstalling, setIsInstalling] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
 
-  const handleTogglePush = async (enabled: boolean) => {
-    if (enabled) {
-      setIsRequestingPermission(true);
-      try {
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-          setPushEnabled(true);
-          toast({
-            title: 'Notifications enabled',
-            description: "You'll receive notifications for new reviews.",
-          });
-        } else {
-          toast({
-            title: 'Permission denied',
-            description: 'Please enable notifications in your browser settings.',
-            variant: 'destructive',
-          });
-        }
-      } catch {
-        toast({
-          title: 'Error',
-          description: 'Failed to request notification permission.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsRequestingPermission(false);
-      }
-    } else {
-      setPushEnabled(false);
-      toast({
-        title: 'Notifications disabled',
-        description: "You won't receive notifications for new reviews.",
-      });
-    }
-  };
 
   const handleClearCache = () => {
     // Keep deviceId
@@ -149,62 +109,17 @@ export default function Settings() {
       </header>
 
       <main className="container px-4 py-6 pb-20">
-        {/* Notifications Section */}
+        {/* Badge Notifications Section */}
         <section className="mb-8">
           <h2 className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4">
             <Bell className="w-4 h-4" />
-            Notifications
+            Badge Notifications
           </h2>
-          
-          {/* Native Push Notifications (only shown on native apps) */}
-          {isNative && (
-            <div className="mb-4">
-              <PushNotificationSetup />
-            </div>
-          )}
-          
-          {/* Web Push Notifications */}
-          {!isNative && (
-            <div className="glass-card rounded-xl p-4 space-y-4 mb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <Label htmlFor="push" className="text-foreground font-medium">
-                    Push Notifications
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Get notified when new reviews are posted
-                  </p>
-                </div>
-                <Switch
-                  id="push"
-                  checked={pushEnabled}
-                  onCheckedChange={handleTogglePush}
-                  disabled={isRequestingPermission}
-                />
-              </div>
-              
-              {!pushEnabled && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleTogglePush(true)}
-                  disabled={isRequestingPermission}
-                  className="w-full"
-                >
-                  {isRequestingPermission ? 'Requesting...' : 'Request Permission'}
-                </Button>
-              )}
-            </div>
-          )}
 
-          {/* Badge Notification Preferences */}
           <div className="glass-card rounded-xl p-4 space-y-4">
-            <div>
-              <h3 className="text-foreground font-medium mb-1">Badge Notifications</h3>
-              <p className="text-sm text-muted-foreground">
-                Choose which items show in the notification badge count
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground">
+              Choose which items show in the notification badge count
+            </p>
             
             <Separator className="bg-border/50" />
             
