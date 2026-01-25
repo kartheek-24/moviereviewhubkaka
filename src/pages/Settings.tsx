@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, User, Trash2, Shield, ExternalLink, Smartphone, Download, Check } from 'lucide-react';
+import { ArrowLeft, Bell, User, Trash2, Shield, ExternalLink, Smartphone, Download, Check, Film, MessageSquare } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { InstallAppGuide } from '@/components/InstallAppGuide';
 import { PushNotificationSetup } from '@/components/PushNotificationSetup';
@@ -12,6 +12,7 @@ import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { usePWAInstallPrompt, trackInstallAttempt } from '@/hooks/usePWAInstall';
+import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 
 export default function Settings() {
   const navigate = useNavigate();
@@ -19,6 +20,7 @@ export default function Settings() {
   const { user, signOut, displayName } = useAuth();
   const { deviceId } = useApp();
   const { canInstall, isInstalled, promptInstall } = usePWAInstallPrompt();
+  const { preferences, updatePreference } = useNotificationPreferences();
   const isNative = Capacitor.isNativePlatform();
   
   const [pushEnabled, setPushEnabled] = useState(false);
@@ -163,7 +165,7 @@ export default function Settings() {
           
           {/* Web Push Notifications */}
           {!isNative && (
-            <div className="glass-card rounded-xl p-4 space-y-4">
+            <div className="glass-card rounded-xl p-4 space-y-4 mb-4">
               <div className="flex items-center justify-between">
                 <div>
                   <Label htmlFor="push" className="text-foreground font-medium">
@@ -194,6 +196,60 @@ export default function Settings() {
               )}
             </div>
           )}
+
+          {/* Badge Notification Preferences */}
+          <div className="glass-card rounded-xl p-4 space-y-4">
+            <div>
+              <h3 className="text-foreground font-medium mb-1">Badge Notifications</h3>
+              <p className="text-sm text-muted-foreground">
+                Choose which items show in the notification badge count
+              </p>
+            </div>
+            
+            <Separator className="bg-border/50" />
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Film className="w-4 h-4 text-primary" />
+                </div>
+                <div>
+                  <Label htmlFor="show-reviews" className="text-foreground font-medium">
+                    New Reviews
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Show badge for new movie reviews
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="show-reviews"
+                checked={preferences.showReviews}
+                onCheckedChange={(checked) => updatePreference('showReviews', checked)}
+              />
+            </div>
+            
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center">
+                  <MessageSquare className="w-4 h-4 text-secondary-foreground" />
+                </div>
+                <div>
+                  <Label htmlFor="show-comments" className="text-foreground font-medium">
+                    New Comments
+                  </Label>
+                  <p className="text-xs text-muted-foreground">
+                    Show badge for new comments
+                  </p>
+                </div>
+              </div>
+              <Switch
+                id="show-comments"
+                checked={preferences.showComments}
+                onCheckedChange={(checked) => updatePreference('showComments', checked)}
+              />
+            </div>
+          </div>
         </section>
 
         {/* Account Section */}
