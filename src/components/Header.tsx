@@ -1,9 +1,11 @@
 import { useState } from 'react';
-import { Menu, Search, X } from 'lucide-react';
+import { Menu, Search, X, Bell } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
 
 interface HeaderProps {
   title?: string;
@@ -19,6 +21,11 @@ export function Header({
 }: HeaderProps) {
   const { toggleDrawer, searchQuery, setSearchQuery } = useApp();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { unreadCount, markAllAsRead } = useUnreadNotifications();
+
+  const handleNotificationClick = () => {
+    markAllAsRead();
+  };
 
   return (
     <header className="sticky top-0 z-40 w-full safe-area-inset-top">
@@ -55,47 +62,69 @@ export function Header({
             )}
           </div>
           
-          {/* Search */}
-          {showSearch && (
-            <div className={cn(
-              'flex items-center gap-2 transition-all duration-300',
-              isSearchOpen ? 'flex-1 ml-2' : ''
-            )}>
-              {isSearchOpen ? (
-                <>
-                  <Input
-                    type="search"
-                    placeholder="Search movies..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="h-9 bg-muted border-0 focus-visible:ring-1 focus-visible:ring-primary"
-                    autoFocus
-                  />
+          {/* Right side */}
+          <div className="flex items-center gap-1">
+            {/* Notification Bell */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleNotificationClick}
+              className="relative text-foreground hover:bg-muted"
+            >
+              <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <Badge 
+                  variant="destructive" 
+                  className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs"
+                >
+                  {unreadCount > 99 ? '99+' : unreadCount}
+                </Badge>
+              )}
+              <span className="sr-only">Notifications ({unreadCount} unread)</span>
+            </Button>
+
+            {/* Search */}
+            {showSearch && (
+              <div className={cn(
+                'flex items-center gap-2 transition-all duration-300',
+                isSearchOpen ? 'flex-1 ml-2' : ''
+              )}>
+                {isSearchOpen ? (
+                  <>
+                    <Input
+                      type="search"
+                      placeholder="Search movies..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="h-9 bg-muted border-0 focus-visible:ring-1 focus-visible:ring-primary"
+                      autoFocus
+                    />
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        setIsSearchOpen(false);
+                        setSearchQuery('');
+                      }}
+                      className="flex-shrink-0"
+                    >
+                      <X className="h-5 w-5" />
+                    </Button>
+                  </>
+                ) : (
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => {
-                      setIsSearchOpen(false);
-                      setSearchQuery('');
-                    }}
-                    className="flex-shrink-0"
+                    onClick={() => setIsSearchOpen(true)}
+                    className="text-foreground hover:bg-muted"
                   >
-                    <X className="h-5 w-5" />
+                    <Search className="h-5 w-5" />
+                    <span className="sr-only">Search</span>
                   </Button>
-                </>
-              ) : (
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsSearchOpen(true)}
-                  className="text-foreground hover:bg-muted"
-                >
-                  <Search className="h-5 w-5" />
-                  <span className="sr-only">Search</span>
-                </Button>
-              )}
-            </div>
-          )}
+                )}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>
