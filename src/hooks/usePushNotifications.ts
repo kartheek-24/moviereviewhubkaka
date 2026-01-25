@@ -6,12 +6,24 @@ import {
   ActionPerformed,
   Token,
 } from '@capacitor/push-notifications';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface PushNotificationState {
   isSupported: boolean;
   isRegistered: boolean;
   token: string | null;
   error: string | null;
+  isLoading: boolean;
+}
+
+// Get device ID from localStorage (same as AppContext)
+function getDeviceId(): string {
+  const stored = localStorage.getItem('deviceId');
+  if (stored) return stored;
+  
+  const newId = 'device_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+  localStorage.setItem('deviceId', newId);
+  return newId;
 }
 
 export function usePushNotifications() {
@@ -20,22 +32,79 @@ export function usePushNotifications() {
     isRegistered: false,
     token: null,
     error: null,
+    isLoading: true,
   });
   const [notifications, setNotifications] = useState<PushNotificationSchema[]>([]);
 
   const isNative = Capacitor.isNativePlatform();
+  const deviceId = getDeviceId();
 
+  // Load persisted push notification state from database
+  useEffect(() => {
+    async function loadPersistedState() {
+      if (!isNative) {
+        setState(prev => ({ ...prev, isSupported: false, isLoading: false }));
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('devices')
+          .select('push_enabled, push_token')
+          .eq('id', deviceId)
+          .maybeSingle();
+
+        if (error) {
+          console.error('Error loading push state:', error);
+          setState(prev => ({ ...prev, isSupported: true, isLoading: false }));
+          return;
+        }
+
+        if (data?.push_enabled && data?.push_token) {
+          // Device was previously registered, restore state
+          setState({
+            isSupported: true,
+            isRegistered: true,
+            token: data.push_token,
+            error: null,
+            isLoading: false,
+          });
+          // Re-register to ensure token is still valid
+          await PushNotifications.register();
+        } else {
+          setState(prev => ({ ...prev, isSupported: true, isLoading: false }));
+        }
+      } catch (err) {
+        console.error('Error loading persisted push state:', err);
+        setState(prev => ({ ...prev, isSupported: true, isLoading: false }));
+      }
+    }
+
+    loadPersistedState();
+  }, [isNative, deviceId]);
+
+  // Set up push notification listeners
   useEffect(() => {
     if (!isNative) {
-      setState(prev => ({ ...prev, isSupported: false }));
       return;
     }
 
-    setState(prev => ({ ...prev, isSupported: true }));
-
     // Listen for registration success
-    const tokenListener = PushNotifications.addListener('registration', (token: Token) => {
+    const tokenListener = PushNotifications.addListener('registration', async (token: Token) => {
       console.log('Push registration success, token:', token.value);
+      
+      // Persist token to database
+      try {
+        await supabase.rpc('register_device', {
+          p_device_id: deviceId,
+          p_platform: Capacitor.getPlatform(),
+          p_push_enabled: true,
+          p_push_token: token.value,
+        });
+      } catch (err) {
+        console.error('Error persisting push token:', err);
+      }
+
       setState(prev => ({
         ...prev,
         isRegistered: true,
@@ -84,7 +153,7 @@ export function usePushNotifications() {
       notificationListener.then(l => l.remove());
       actionListener.then(l => l.remove());
     };
-  }, [isNative]);
+  }, [isNative, deviceId]);
 
   const requestPermission = useCallback(async (): Promise<boolean> => {
     if (!isNative) {
@@ -122,6 +191,31 @@ export function usePushNotifications() {
     }
   }, [isNative]);
 
+  const disableNotifications = useCallback(async (): Promise<boolean> => {
+    if (!isNative) {
+      return false;
+    }
+
+    try {
+      // Update database to disable push
+      await supabase.rpc('update_device_push', {
+        p_device_id: deviceId,
+        p_push_enabled: false,
+      });
+
+      setState(prev => ({
+        ...prev,
+        isRegistered: false,
+        token: null,
+      }));
+
+      return true;
+    } catch (err: any) {
+      console.error('Error disabling push notifications:', err);
+      return false;
+    }
+  }, [isNative, deviceId]);
+
   const clearNotifications = useCallback(() => {
     setNotifications([]);
   }, []);
@@ -130,6 +224,7 @@ export function usePushNotifications() {
     ...state,
     notifications,
     requestPermission,
+    disableNotifications,
     clearNotifications,
     isNative,
   };
