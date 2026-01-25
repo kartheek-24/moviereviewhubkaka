@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Menu, Search, X, Bell } from 'lucide-react';
+import { Menu, Search, X } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { useUnreadNotifications } from '@/hooks/useUnreadNotifications';
+import { NotificationDropdown } from '@/components/NotificationDropdown';
 
 interface HeaderProps {
   title?: string;
@@ -21,11 +21,7 @@ export function Header({
 }: HeaderProps) {
   const { toggleDrawer, searchQuery, setSearchQuery } = useApp();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const { unreadCount, markAllAsRead } = useUnreadNotifications();
-
-  const handleNotificationClick = () => {
-    markAllAsRead();
-  };
+  const { unreadCount, markAllAsRead, lastSeen, preferences } = useUnreadNotifications();
 
   return (
     <header className="sticky top-0 z-40 w-full safe-area-inset-top">
@@ -64,24 +60,14 @@ export function Header({
           
           {/* Right side */}
           <div className="flex items-center gap-1">
-            {/* Notification Bell */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleNotificationClick}
-              className="relative text-foreground hover:bg-muted"
-            >
-              <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <Badge 
-                  variant="destructive" 
-                  className="absolute -top-1 -right-1 h-5 min-w-5 flex items-center justify-center p-0 text-xs"
-                >
-                  {unreadCount > 99 ? '99+' : unreadCount}
-                </Badge>
-              )}
-              <span className="sr-only">Notifications ({unreadCount} unread)</span>
-            </Button>
+            {/* Notification Dropdown */}
+            <NotificationDropdown
+              unreadCount={unreadCount}
+              onMarkAllRead={markAllAsRead}
+              lastSeen={lastSeen}
+              showReviews={preferences.showReviews}
+              showComments={preferences.showComments}
+            />
 
             {/* Search */}
             {showSearch && (
