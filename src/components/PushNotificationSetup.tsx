@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bell, BellOff, Check, X } from 'lucide-react';
+import { Bell, BellOff, Check, X, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
@@ -15,7 +15,9 @@ export function PushNotificationSetup({ showCard = true }: PushNotificationSetup
     isRegistered, 
     token, 
     error, 
+    isLoading,
     requestPermission, 
+    disableNotifications,
     isNative 
   } = usePushNotifications();
   const { toast } = useToast();
@@ -40,20 +42,67 @@ export function PushNotificationSetup({ showCard = true }: PushNotificationSetup
     }
   };
 
+  const handleDisableNotifications = async () => {
+    setIsRequesting(true);
+    const success = await disableNotifications();
+    setIsRequesting(false);
+
+    if (success) {
+      toast({
+        title: 'Notifications disabled',
+        description: 'You will no longer receive push notifications.',
+      });
+    } else {
+      toast({
+        title: 'Error',
+        description: 'Failed to disable notifications. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
   // Don't show anything if not on native platform
   if (!isNative) {
     return null;
   }
 
+  // Show loading state while checking persisted preference
+  if (isLoading) {
+    if (!showCard) {
+      return (
+        <Button variant="outline" size="sm" disabled>
+          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+          Loading...
+        </Button>
+      );
+    }
+    return (
+      <Card className="bg-card/50 border-border/50">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
+            Push Notifications
+          </CardTitle>
+          <CardDescription>Loading notification preferences...</CardDescription>
+        </CardHeader>
+      </Card>
+    );
+  }
+
   if (!showCard) {
     return (
       <Button
-        onClick={handleEnableNotifications}
-        disabled={isRegistered || isRequesting}
+        onClick={isRegistered ? handleDisableNotifications : handleEnableNotifications}
+        disabled={isRequesting}
         variant={isRegistered ? 'outline' : 'default'}
         size="sm"
       >
-        {isRegistered ? (
+        {isRequesting ? (
+          <>
+            <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            {isRegistered ? 'Disabling...' : 'Enabling...'}
+          </>
+        ) : isRegistered ? (
           <>
             <Check className="w-4 h-4 mr-2" />
             Notifications On
@@ -61,7 +110,7 @@ export function PushNotificationSetup({ showCard = true }: PushNotificationSetup
         ) : (
           <>
             <Bell className="w-4 h-4 mr-2" />
-            {isRequesting ? 'Enabling...' : 'Enable Notifications'}
+            Enable Notifications
           </>
         )}
       </Button>
@@ -95,20 +144,25 @@ export function PushNotificationSetup({ showCard = true }: PushNotificationSetup
         )}
         
         <Button
-          onClick={handleEnableNotifications}
-          disabled={isRegistered || isRequesting}
-          variant={isRegistered ? 'outline' : 'default'}
+          onClick={isRegistered ? handleDisableNotifications : handleEnableNotifications}
+          disabled={isRequesting}
+          variant={isRegistered ? 'destructive' : 'default'}
           className="w-full"
         >
-          {isRegistered ? (
+          {isRequesting ? (
             <>
-              <Check className="w-4 h-4 mr-2" />
-              Notifications Enabled
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              {isRegistered ? 'Disabling...' : 'Enabling...'}
+            </>
+          ) : isRegistered ? (
+            <>
+              <BellOff className="w-4 h-4 mr-2" />
+              Disable Notifications
             </>
           ) : (
             <>
               <Bell className="w-4 h-4 mr-2" />
-              {isRequesting ? 'Enabling...' : 'Enable Notifications'}
+              Enable Notifications
             </>
           )}
         </Button>
