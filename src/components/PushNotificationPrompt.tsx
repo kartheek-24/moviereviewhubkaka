@@ -88,7 +88,7 @@ export function PushNotificationPrompt({ onEnableNotifications }: PushNotificati
             <Bell className="w-8 h-8 text-primary animate-pulse" />
           </div>
           <DialogTitle className="text-center text-xl">
-            Stay Updated!
+            Stay Updated
           </DialogTitle>
           <DialogDescription className="text-center space-y-2">
             <p>
