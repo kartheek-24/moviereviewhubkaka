@@ -40,15 +40,18 @@ export function Drawer() {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [setIsDrawerOpen]);
 
-  // Prevent page scroll when drawer is open
+  // Prevent app scroll when drawer is open (important when #root is the scroll container)
   useEffect(() => {
+    const root = document.getElementById('root');
+    if (!root) return;
+
     if (isDrawerOpen) {
-      document.body.style.overflow = 'hidden';
+      root.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = '';
+      root.style.overflow = '';
     }
     return () => {
-      document.body.style.overflow = '';
+      root.style.overflow = '';
     };
   }, [isDrawerOpen]);
 
