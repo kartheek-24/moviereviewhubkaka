@@ -12,7 +12,8 @@ const config: CapacitorConfig = {
   ios: {
     contentInset: 'automatic',
     preferredContentMode: 'mobile',
-    scheme: 'MovieReviewHub'
+    scheme: 'MovieReviewHub',
+    scrollEnabled: true
   },
   android: {
     allowMixedContent: true

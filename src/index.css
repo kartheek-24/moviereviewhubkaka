@@ -68,12 +68,14 @@
 @layer base {
   * {
     @apply border-border;
+    -webkit-tap-highlight-color: transparent;
   }
 
   html {
     @apply scroll-smooth;
     height: 100%;
     overflow: hidden;
+    touch-action: manipulation;
   }
 
   body {
@@ -81,15 +83,21 @@
     font-feature-settings: "rlig" 1, "calt" 1;
     height: 100%;
     overflow: hidden;
+    position: fixed;
+    width: 100%;
+    touch-action: manipulation;
   }
 
   #root {
-    height: 100dvh;
-    min-height: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     overflow-y: auto;
     overflow-x: hidden;
     -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
+    overscroll-behavior-y: contain;
   }
 }
 
