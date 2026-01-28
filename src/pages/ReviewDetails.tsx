@@ -111,7 +111,7 @@ export default function ReviewDetails() {
 
   if (!review && !isLoading && reviewError) {
     return (
-      <div className="min-h-screen cinema-bg flex items-center justify-center">
+      <div className="min-h-full cinema-bg flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-display font-semibold text-foreground mb-2">
             Review not found
@@ -126,7 +126,7 @@ export default function ReviewDetails() {
   }
 
   return (
-    <div className="min-h-screen cinema-bg">
+    <div className="min-h-full cinema-bg">
       {/* Custom Header */}
       <header className="sticky top-0 z-40 w-full safe-area-inset-top">
         <div className="glass-card border-b border-border/50">

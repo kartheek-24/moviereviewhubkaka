@@ -59,14 +59,14 @@ export default function Login() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen cinema-bg flex items-center justify-center">
+      <div className="min-h-full cinema-bg flex items-center justify-center">
         <div className="animate-pulse text-muted-foreground">Loading...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen cinema-bg flex flex-col">
+    <div className="min-h-full cinema-bg flex flex-col">
       {/* Header */}
       <header className="sticky top-0 z-40 w-full safe-area-inset-top">
         <div className="glass-card border-b border-border/50">

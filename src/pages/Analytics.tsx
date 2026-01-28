@@ -182,7 +182,7 @@ export default function Analytics() {
   };
 
   return (
-    <div className="min-h-screen cinema-bg">
+    <div className="min-h-full cinema-bg">
       {/* Header */}
       <header className="sticky top-0 z-40 w-full safe-area-inset-top">
         <div className="glass-card border-b border-border/50">
