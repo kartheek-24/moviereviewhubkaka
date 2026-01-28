@@ -74,25 +74,22 @@
   html {
     @apply scroll-smooth;
     height: 100%;
-    overflow: hidden;
-    touch-action: manipulation;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
-    height: 100%;
-    overflow: hidden;
-    touch-action: manipulation;
+    min-height: 100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
   }
 
   #root {
-    height: 100vh;
-    height: 100dvh;
-    overflow-y: scroll;
-    overflow-x: hidden;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
+    min-height: 100%;
   }
 }
 

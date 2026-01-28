@@ -40,18 +40,15 @@ export function Drawer() {
     return () => document.removeEventListener('keydown', handleEscape);
   }, [setIsDrawerOpen]);
 
-  // Prevent app scroll when drawer is open (important for iOS WebView scrolling)
+  // Prevent page scroll when drawer is open
   useEffect(() => {
-    const root = document.getElementById('root');
-    if (!root) return;
-
     if (isDrawerOpen) {
-      root.style.overflow = 'hidden';
+      document.body.style.overflow = 'hidden';
     } else {
-      root.style.overflow = '';
+      document.body.style.overflow = '';
     }
     return () => {
-      root.style.overflow = '';
+      document.body.style.overflow = '';
     };
   }, [isDrawerOpen]);
 
