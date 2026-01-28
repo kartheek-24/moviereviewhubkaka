@@ -13,6 +13,9 @@ import { Button } from '@/components/ui/button';
 
 export default function Index() {
   const { selectedLanguage, setSelectedLanguage, sortBy, searchQuery } = useApp();
+  const scrollTest =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).has('scrollTest');
   
   // Enable real-time updates for reviews
   useRealtimeReviews();
@@ -94,6 +97,9 @@ export default function Index() {
             ))}
           </div>
         )}
+
+        {/* Debug: add extra height to confirm scrolling works on iOS Safari */}
+        {scrollTest && <div aria-hidden="true" style={{ height: '200vh' }} />}
       </main>
     </div>
   );
