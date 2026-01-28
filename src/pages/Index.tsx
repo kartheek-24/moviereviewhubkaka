@@ -27,7 +27,7 @@ export default function Index() {
   });
 
   return (
-    <div className="min-h-full cinema-bg" style={{ minHeight: '100%' }}>
+    <div className="min-h-full cinema-bg">
       <Header title="MovieReviewHub By Kaka" />
       <Drawer />
 
