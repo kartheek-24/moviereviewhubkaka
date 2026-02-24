@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.4a69c56c483f4cd989cba01d7493307c',
+  appId: 'com.kartheek.moviereviewhub',
   appName: 'MovieReviewHub',
   webDir: 'dist',
   // Uncomment server block for hot-reload during development:

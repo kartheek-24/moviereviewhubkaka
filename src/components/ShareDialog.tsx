@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
-import { Copy, Check, Facebook, MessageCircle, QrCode, AlertCircle } from 'lucide-react';
+import { Copy, Check, Facebook, MessageCircle, QrCode } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +11,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
 interface ShareDialogProps {
   open: boolean;
@@ -37,21 +36,7 @@ export function ShareDialog({ open, onOpenChange, title, text, url }: ShareDialo
   const { toast } = useToast();
   const [copied, setCopied] = useState(false);
 
-  // Check if we're in preview mode (lovableproject.com URLs are not publicly accessible)
-  const isPreviewMode = useMemo(() => {
-    return window.location.hostname.includes('lovableproject.com');
-  }, []);
-
-  // Get the shareable URL - use the published URL if available
-  const shareableUrl = useMemo(() => {
-    // If we're on a custom domain or lovable.app, use the current URL
-    if (!isPreviewMode) {
-      return url;
-    }
-    // In preview mode, construct a relative path that will work once published
-    const path = new URL(url).pathname;
-    return `${window.location.origin}${path}`;
-  }, [url, isPreviewMode]);
+  const shareableUrl = url;
 
   const handleCopyLink = async () => {
     try {
@@ -59,9 +44,7 @@ export function ShareDialog({ open, onOpenChange, title, text, url }: ShareDialo
       setCopied(true);
       toast({
         title: 'Link copied!',
-        description: isPreviewMode 
-          ? 'Link copied. Note: Publish your app for the link to work publicly.'
-          : 'Review link has been copied to your clipboard.',
+        description: 'Review link has been copied to your clipboard.',
       });
       setTimeout(() => setCopied(false), 2000);
     } catch {
@@ -123,15 +106,6 @@ export function ShareDialog({ open, onOpenChange, title, text, url }: ShareDialo
         <DialogHeader>
           <DialogTitle className="text-center">Share Review</DialogTitle>
         </DialogHeader>
-
-        {isPreviewMode && (
-          <Alert variant="default" className="border-amber-500/50 bg-amber-500/10">
-            <AlertCircle className="h-4 w-4 text-amber-500" />
-            <AlertDescription className="text-sm text-amber-200">
-              You're in preview mode. <strong>Publish your app</strong> to share links that work publicly.
-            </AlertDescription>
-          </Alert>
-        )}
 
         <Tabs defaultValue="social" className="w-full">
           <TabsList className="grid w-full grid-cols-2">
@@ -221,9 +195,7 @@ export function ShareDialog({ open, onOpenChange, title, text, url }: ShareDialo
                 />
               </div>
               <p className="text-sm text-muted-foreground text-center">
-                {isPreviewMode 
-                  ? 'QR code will work after publishing your app'
-                  : 'Scan this QR code to open the review on another device'}
+                {'Scan this QR code to open the review on another device'}
               </p>
               <Button onClick={handleDownloadQR} variant="outline" className="w-full">
                 Download QR Code

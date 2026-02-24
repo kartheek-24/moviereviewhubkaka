@@ -65,7 +65,7 @@ export default function PrivacyPolicy() {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">4. Data Storage and Security</h2>
             <p className="text-muted-foreground leading-relaxed">
-              Your data is stored securely using industry-standard encryption and security measures. We use Lovable Cloud for our backend infrastructure, which provides robust security features including row-level security policies to protect your data.
+              Your data is stored securely using industry-standard encryption and security measures. We use Supabase for our backend infrastructure, which provides robust security features including row-level security policies to protect your data.
             </p>
           </section>
 
