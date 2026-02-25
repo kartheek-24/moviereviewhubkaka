@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
+import { OfflineBanner } from "@/components/OfflineBanner";
 import Index from "./pages/Index";
 import ReviewDetails from "./pages/ReviewDetails";
 import Settings from "./pages/Settings";
@@ -24,6 +25,7 @@ function AppContent() {
       <Toaster />
       <Sonner />
       <PushNotificationPrompt />
+      <OfflineBanner />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />

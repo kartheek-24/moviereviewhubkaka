@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Calendar, Share2, Home, Ticket } from 'lucide-react';
+import { ArrowLeft, Calendar, Share2, Home, Ticket, RefreshCw } from 'lucide-react';
 import { useReview, useComments, useCreateComment, useUpdateComment, useDeleteComment, useReportComment, useUserReactions, useToggleCommentReaction } from '@/hooks/useReviews';
+import { usePullToRefresh } from '@/hooks/usePullToRefresh';
 import { useRealtimeComments } from '@/hooks/useRealtimeComments';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
@@ -25,8 +26,13 @@ export default function ReviewDetails() {
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [buyTicketsDialogOpen, setBuyTicketsDialogOpen] = useState(false);
   
-  const { data: review, isLoading: reviewLoading, error: reviewError } = useReview(id);
-  const { data: comments = [], isLoading: commentsLoading } = useComments(id);
+  const { data: review, isLoading: reviewLoading, error: reviewError, refetch: refetchReview } = useReview(id);
+  const { data: comments = [], isLoading: commentsLoading, refetch: refetchComments } = useComments(id);
+
+  const { pullDistance, isRefreshing } = usePullToRefresh(
+    () => { refetchReview(); refetchComments(); },
+    '[data-radix-scroll-area-viewport]'
+  );
   
   // Enable real-time updates for comments
   useRealtimeComments(id);
@@ -172,6 +178,17 @@ export default function ReviewDetails() {
 
       <ScrollArea className="h-[calc(100vh-3.5rem)]">
         <main className="container px-4 py-6 pb-20">
+          {/* Pull-to-refresh indicator */}
+          {(pullDistance > 0 || isRefreshing) && (
+            <div
+              className="flex justify-center mb-2 -mt-4"
+              style={{ opacity: isRefreshing ? 1 : Math.min(pullDistance / 75, 1) }}
+            >
+              <div className="glass-card rounded-full p-1.5 shadow">
+                <RefreshCw className={`h-4 w-4 text-primary ${isRefreshing ? 'animate-spin' : ''}`} />
+              </div>
+            </div>
+          )}
           {isLoading ? (
             <div className="animate-pulse space-y-6">
               <div className="h-64 rounded-xl skeleton-shimmer" />
