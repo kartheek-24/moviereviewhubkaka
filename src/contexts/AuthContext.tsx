@@ -14,6 +14,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, displayName?: string) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
   updateDisplayName: (name: string) => Promise<{ error: Error | null }>;
+  deleteAccount: () => Promise<{ error: Error | null }>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -137,6 +138,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setDisplayName(null);
   };
 
+  const deleteAccount = async () => {
+    if (!user) return { error: new Error('Not authenticated') };
+
+    try {
+      // Delete user's comments
+      await supabase.from('comments').delete().eq('user_id', user.id);
+      // Delete user's profile
+      await supabase.from('profiles').delete().eq('id', user.id);
+      // Sign out
+      await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setDisplayName(null);
+      return { error: null };
+    } catch (err) {
+      return { error: err as Error };
+    }
+  };
+
   const updateDisplayName = async (name: string) => {
     if (!user) return { error: new Error('Not authenticated') };
 
@@ -164,6 +184,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         signUp,
         signOut,
         updateDisplayName,
+        deleteAccount,
       }}
     >
       {children}

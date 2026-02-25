@@ -1,6 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, Bell, User, Trash2, Shield, ExternalLink, Smartphone, Download, Check, Film, MessageSquare } from 'lucide-react';
+import { ArrowLeft, Bell, User, Trash2, Shield, ExternalLink, Smartphone, Download, Check, Film, MessageSquare, AlertTriangle } from 'lucide-react';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import { InstallAppGuide } from '@/components/InstallAppGuide';
 import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
@@ -15,13 +26,14 @@ import { useNotificationPreferences } from '@/hooks/useNotificationPreferences';
 export default function Settings() {
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user, signOut, displayName } = useAuth();
+  const { user, signOut, displayName, deleteAccount } = useAuth();
   const { deviceId } = useApp();
   const { canInstall, isInstalled, promptInstall } = usePWAInstallPrompt();
   const { preferences, updatePreference } = useNotificationPreferences();
   
   const [isInstalling, setIsInstalling] = useState(false);
   const [guideOpen, setGuideOpen] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
 
 
   const handleClearCache = () => {
@@ -44,6 +56,25 @@ export default function Settings() {
       description: 'You have been logged out successfully.',
     });
     navigate('/');
+  };
+
+  const handleDeleteAccount = async () => {
+    setIsDeletingAccount(true);
+    const { error } = await deleteAccount();
+    setIsDeletingAccount(false);
+    if (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete account. Please try again.',
+        variant: 'destructive',
+      });
+    } else {
+      toast({
+        title: 'Account deleted',
+        description: 'Your account and data have been permanently deleted.',
+      });
+      navigate('/');
+    }
   };
 
   const handleInstallApp = async () => {
@@ -185,13 +216,42 @@ export default function Settings() {
                   <p className="text-foreground">{user.email}</p>
                 </div>
                 <Separator className="bg-border/50" />
-                <Button 
-                  variant="destructive" 
+                <Button
+                  variant="destructive"
                   className="w-full"
                   onClick={handleLogout}
                 >
                   Logout
                 </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground"
+                    >
+                      <AlertTriangle className="w-4 h-4 mr-2" />
+                      Delete Account
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete Account</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete your account and all your data including comments and profile information. This action cannot be undone.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={handleDeleteAccount}
+                        disabled={isDeletingAccount}
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                      >
+                        {isDeletingAccount ? 'Deleting...' : 'Delete Account'}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             ) : (
               <div className="space-y-3">

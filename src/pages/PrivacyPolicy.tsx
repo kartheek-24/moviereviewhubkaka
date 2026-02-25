@@ -30,7 +30,7 @@ export default function PrivacyPolicy() {
       <main className="container px-4 py-6 pb-20 max-w-3xl mx-auto">
         <div className="glass-card rounded-xl p-6 space-y-6">
           <div className="text-center mb-8">
-            <p className="text-sm text-muted-foreground">Last updated: January 17, 2026</p>
+            <p className="text-sm text-muted-foreground">Last updated: February 24, 2026</p>
           </div>
 
           <section className="space-y-3">
@@ -91,7 +91,7 @@ export default function PrivacyPolicy() {
               <li>Correct inaccurate data</li>
               <li>Request deletion of your data</li>
               <li>Opt-out of push notifications</li>
-              <li>Delete your account at any time</li>
+              <li>Delete your account at any time via Settings → Delete Account</li>
             </ul>
           </section>
 
