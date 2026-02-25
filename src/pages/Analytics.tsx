@@ -1,8 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3, Eye, MousePointerClick, Clock, Smartphone, Monitor, Download, Target, CheckCircle, XCircle, RefreshCw, Globe } from 'lucide-react';
+import { ArrowLeft, TrendingUp, MessageSquare, ThumbsUp, Film, Users, BarChart3, Eye, MousePointerClick, Clock, RefreshCw, Globe } from 'lucide-react';
 import { useReviews, useLanguages } from '@/hooks/useReviews';
-import { usePWAInstallCount, usePWAInstallsByPlatform, useInstallAttemptStats } from '@/hooks/usePWAInstall';
 import { useAnalytics } from '@/hooks/useAnalytics';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -43,9 +42,6 @@ export default function Analytics() {
   const navigate = useNavigate();
   const { data: reviews = [], isLoading } = useReviews();
   const { data: languages = [] } = useLanguages();
-  const { count: pwaInstallCount, isLoading: pwaLoading } = usePWAInstallCount();
-  const { data: pwaByPlatform, isLoading: pwaByPlatformLoading } = usePWAInstallsByPlatform();
-  const { stats: installAttemptStats, isLoading: installStatsLoading } = useInstallAttemptStats();
   const { data: visitorAnalytics, isLoading: analyticsLoading, refetch: refetchAnalytics } = useAnalytics(30);
   const [activeTab, setActiveTab] = useState('visitors');
 
@@ -312,21 +308,6 @@ export default function Analytics() {
                       </CardContent>
                     </Card>
 
-                    <Card className="bg-gradient-to-br from-teal-500/20 to-teal-500/5 border-teal-500/30">
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-3">
-                          <div className="w-12 h-12 rounded-xl bg-teal-500/30 flex items-center justify-center">
-                            <Download className="w-6 h-6 text-teal-500" />
-                          </div>
-                          <div>
-                            <p className="text-3xl font-bold text-foreground">
-                              {pwaLoading ? '...' : pwaInstallCount ?? 0}
-                            </p>
-                            <p className="text-xs text-muted-foreground">App Installs</p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
                   </div>
 
                   {/* Visitors Timeline Chart */}
@@ -489,58 +470,6 @@ export default function Analytics() {
                       </CardContent>
                     </Card>
 
-                    {/* Install Conversion Stats */}
-                    <Card className="bg-card/50 border-border/50">
-                      <CardHeader>
-                        <CardTitle className="text-lg flex items-center gap-2">
-                          <Target className="w-5 h-5 text-primary" />
-                          Install Conversion
-                        </CardTitle>
-                        <CardDescription>PWA install prompt success rate</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        {installStatsLoading ? (
-                          <div className="animate-pulse space-y-3">
-                            <div className="h-16 skeleton-shimmer rounded" />
-                            <div className="h-4 w-3/4 skeleton-shimmer rounded" />
-                          </div>
-                        ) : installAttemptStats ? (
-                          <div className="space-y-4">
-                            <div className="text-center">
-                              <p className="text-4xl font-bold text-primary">
-                                {installAttemptStats.conversionRate.toFixed(1)}%
-                              </p>
-                              <p className="text-sm text-muted-foreground">Conversion Rate</p>
-                            </div>
-                            <div className="grid grid-cols-2 gap-3 pt-2">
-                              <div className="flex items-center gap-2 p-2 rounded-lg bg-green-500/10">
-                                <CheckCircle className="w-4 h-4 text-green-500" />
-                                <div>
-                                  <p className="text-lg font-semibold text-foreground">{installAttemptStats.totalAccepted}</p>
-                                  <p className="text-xs text-muted-foreground">Accepted</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2 p-2 rounded-lg bg-red-500/10">
-                                <XCircle className="w-4 h-4 text-red-500" />
-                                <div>
-                                  <p className="text-lg font-semibold text-foreground">{installAttemptStats.totalDismissed}</p>
-                                  <p className="text-xs text-muted-foreground">Dismissed</p>
-                                </div>
-                              </div>
-                            </div>
-                            <div className="flex justify-between text-xs text-muted-foreground pt-2 border-t border-border/50">
-                              <span>Total Prompts: {installAttemptStats.totalPrompted}</span>
-                              <span>Fallbacks: {installAttemptStats.totalFallback}</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="text-center text-muted-foreground py-4">
-                            <p>No install data yet</p>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-
                     {/* Engagement Rate */}
                     <Card className="bg-card/50 border-border/50">
                       <CardHeader>
@@ -686,84 +615,6 @@ export default function Analytics() {
                     </Card>
                   </div>
 
-                  {/* PWA Installs by Platform */}
-                  <Card className="bg-card/50 border-border/50">
-                    <CardHeader>
-                      <CardTitle className="text-lg flex items-center gap-2">
-                        <Download className="w-5 h-5 text-primary" />
-                        App Installs by Platform
-                      </CardTitle>
-                      <CardDescription>PWA installations breakdown</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      {pwaByPlatformLoading ? (
-                        <div className="h-48 flex items-center justify-center">
-                          <div className="animate-pulse text-muted-foreground">Loading...</div>
-                        </div>
-                      ) : pwaByPlatform.length === 0 ? (
-                        <div className="h-48 flex items-center justify-center">
-                          <p className="text-muted-foreground text-sm">No installations yet</p>
-                        </div>
-                      ) : (
-                        <div className="grid md:grid-cols-2 gap-6 items-center">
-                          <div className="h-48">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <PieChart>
-                                <Pie
-                                  data={pwaByPlatform}
-                                  cx="50%"
-                                  cy="50%"
-                                  innerRadius={40}
-                                  outerRadius={70}
-                                  paddingAngle={4}
-                                  dataKey="count"
-                                  nameKey="platform"
-                                >
-                                  {pwaByPlatform.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={entry.fill} />
-                                  ))}
-                                </Pie>
-                                <Tooltip content={<CustomTooltip />} />
-                              </PieChart>
-                            </ResponsiveContainer>
-                          </div>
-                          <div className="space-y-4">
-                            {pwaByPlatform.map((platform, i) => (
-                              <div key={i} className="flex items-center gap-4">
-                                <div 
-                                  className="w-10 h-10 rounded-lg flex items-center justify-center"
-                                  style={{ backgroundColor: `${platform.fill}20` }}
-                                >
-                                  {platform.platform === 'Android' ? (
-                                    <Smartphone className="w-5 h-5" style={{ color: platform.fill }} />
-                                  ) : platform.platform === 'iOS' ? (
-                                    <Smartphone className="w-5 h-5" style={{ color: platform.fill }} />
-                                  ) : (
-                                    <Monitor className="w-5 h-5" style={{ color: platform.fill }} />
-                                  )}
-                                </div>
-                                <div className="flex-1">
-                                  <div className="flex justify-between mb-1">
-                                    <span className="text-sm text-foreground">{platform.platform}</span>
-                                    <span className="text-sm font-medium text-foreground">{platform.count}</span>
-                                  </div>
-                                  <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
-                                    <div 
-                                      className="h-full rounded-full transition-all duration-500"
-                                      style={{ 
-                                        width: `${(platform.count / (pwaInstallCount || 1)) * 100}%`,
-                                        backgroundColor: platform.fill
-                                      }}
-                                    />
-                                  </div>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                    </CardContent>
-                  </Card>
                 </TabsContent>
 
                 {/* Content Tab */}

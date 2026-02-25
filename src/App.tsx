@@ -6,8 +6,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppProvider } from "@/contexts/AppContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { PushNotificationPrompt } from "@/components/PushNotificationPrompt";
-import { FloatingInstallButton } from "@/components/FloatingInstallButton";
-import { usePWAInstallTracker } from "@/hooks/usePWAInstall";
 import Index from "./pages/Index";
 import ReviewDetails from "./pages/ReviewDetails";
 import Settings from "./pages/Settings";
@@ -21,15 +19,11 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 function AppContent() {
-  // Track PWA installs
-  usePWAInstallTracker();
-  
   return (
     <>
       <Toaster />
       <Sonner />
       <PushNotificationPrompt />
-      <FloatingInstallButton />
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
