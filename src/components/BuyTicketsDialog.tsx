@@ -36,9 +36,9 @@ const formatOptions: FormatOption[] = [
   { id: 'imax', name: 'IMAX', icon: '📽️', priceMultiplier: 1.6, description: 'Giant screen experience' },
 ];
 
-// Helper to detect if user is on mobile
+// Helper to detect if user is on iOS
 const isMobileDevice = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
 };
 
 const theaters: Theater[] = [

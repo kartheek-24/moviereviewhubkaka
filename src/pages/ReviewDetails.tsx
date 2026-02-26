@@ -115,15 +115,17 @@ export default function ReviewDetails() {
 
   const isLoading = reviewLoading;
 
-  if (!review && !isLoading && reviewError) {
+  if (!review && !isLoading) {
     return (
       <div className="min-h-full cinema-bg flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center px-4">
           <h1 className="text-2xl font-display font-semibold text-foreground mb-2">
-            Review not found
+            {reviewError ? 'Failed to load review' : 'Review not found'}
           </h1>
           <p className="text-muted-foreground mb-4">
-            This review may have been removed or doesn't exist.
+            {reviewError
+              ? 'Please check your connection and try again.'
+              : "This review may have been removed or doesn't exist."}
           </p>
           <Button onClick={() => navigate('/')}>Go Home</Button>
         </div>
