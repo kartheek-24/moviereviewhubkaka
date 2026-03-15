@@ -4,6 +4,8 @@ A mobile-first movie review app where users can discover, share, and discuss mov
 
 **App Store:** https://apps.apple.com/app/moviereviewhubbykaka/id6759014502
 
+> Currently available for download on iOS. Android support is coming soon.
+
 ## About the App
 
 MovieReviewHub By Kaka is a community-driven movie review platform that lets users:
