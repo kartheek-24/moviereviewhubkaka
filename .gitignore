@@ -17,6 +17,9 @@ android/app/google-services.json
 android/app/*.keystore
 *.keystore
 
+# Local Claude/IDE config
+.claude/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
